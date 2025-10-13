@@ -1,0 +1,114 @@
+name: Build and Publish Wolfi packages on GitHub pages
+
+on:
+  push:
+    branches: 
+      - main
+    paths:
+      - '*.yaml'
+      - '*.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    concurrency:
+      group: build-${{ matrix.os }}
+      cancel-in-progress: false
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            arch: x86_64
+            deb: amd64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+            deb: arm64
+    runs-on: ${{ matrix.os }}
+    container:
+        image: ghcr.io/wolfi-dev/sdk:latest
+        options: |
+            --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/fuse --security-opt seccomp=unconfined --security-opt apparmor:unconfined
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Trust the github workspace
+        run: git config --global --add safe.directory "$(pwd)"
+
+      - name: Look for changed files
+        id: changes
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            melange:
+              - ./*.yaml
+              - ./*.yml
+
+      - name: Create packages directory
+        run: mkdir -p packages
+
+      - name: Get signing key
+        run: echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa
+
+      - name: Build packages
+        run: |
+          for file in ${{ steps.changes.outputs.melange_all_changed_files }}; do
+              if [[ $file == ".yam.yaml" ]]; then
+                  continue
+              fi
+
+              packageName=${file%.yaml}
+
+              mkdir -p "${packageName}"
+
+              melange build \
+                  --arch ${{ matrix.arch }} \
+                  --generate-index=false \
+                  -r https://packages.wolfi.dev/os \
+                  -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
+                  -r https://glimmer-labs.github.io/wolfi \
+                  -k https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub \
+                  --signing-key glimmer-labs-signing.rsa \
+                  --git-repo-url=https://github.com/glimmer-labs/wolfi \
+                  --git-commit=${{ github.sha }} \
+                  --source-dir=./${packageName} \
+                  $file
+          done
+
+      - name: Create repository index
+        run: |
+          if curl --output /dev/null --silent --head --fail https://glimmer-labs.github.io/wolfi/${{ matrix.arch }}/APKINDEX.tar.gz; then
+              curl -o APKINDEX.tar.gz https://glimmer-labs.github.io/wolfi/${{ matrix.arch }}/APKINDEX.tar.gz
+          fi
+          melange index --arch ${{ matrix.arch }} -m --signing-key glimmer-labs-signing.rsa packages/${{ matrix.arch }}/*.apk
+          mv APKINDEX.tar.gz packages/${{ matrix.arch }}/APKINDEX.tar.gz
+
+      - name: Archive packages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.arch }}
+          path: packages/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: apk-repository
+
+      - name: Get public key
+        run: echo "${{ secrets.PUBLIC_KEY }}" > glimmer-labs-signing.rsa.pub
+
+      - name: Download all workflow artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: .
+          merge-multiple: true
+
+      - name: Commit to GitHub pages branch
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: .
+          message: "Publish changes from commit ${{ github.sha }}"
