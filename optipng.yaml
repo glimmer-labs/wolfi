@@ -5,6 +5,10 @@ package:
   description: OptiPNG is a PNG optimizer that recompresses image files to a smaller size, without losing any information.
   copyright:
     - license: Zlib
+    - license: Libpng
+    - license: GPL-2.0
+    - license: MIT
+    - license: BSL-1.0
 
 environment:
   contents:
