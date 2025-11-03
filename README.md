@@ -31,12 +31,11 @@ EOF
 ```diff
 contents:
   keyring:
-+   - https://wolfi.shyim.me/php-signing.rsa.pub
-    - https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub
++   - https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
   repositories:
 +   - https://glimmer-labs.github.io/wolfi
     - https://packages.wolfi.dev/os
   packages:
     - wolfi-base
-    - frankenphp-8.3
 ```
