@@ -1,0 +1,47 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    paths:
+      - "*.yaml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint using Wolfictl
+        uses: wolfi-dev/actions/wolfictl-lint@main
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wolfi-dev/sdk:latest
+      options: |
+        --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/fuse --security-opt seccomp=unconfined --security-opt apparmor:unconfined
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Generate key
+        run: melange keygen
+
+      - name: Look for changed files
+        id: changes
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            melange:
+              - ./*.yaml
+      
+      - name: Build all packages
+        run: |
+          make init
+          for file in ${{ steps.changes.outputs.melange_all_changed_files }}; do
+              if [[ $file == ".yam.yaml" ]]; then
+                  continue
+              fi
+
+              make package/"${file%.yaml}"
+              make test/"${file%.yaml}"
+          done
