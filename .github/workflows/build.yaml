@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - '*.yaml'
-      - '*.yml'
 
 permissions:
   contents: write
@@ -43,7 +42,6 @@ jobs:
           files_yaml: |
             melange:
               - ./*.yaml
-              - ./*.yml
 
       - name: Create packages directory
         run: mkdir -p packages
