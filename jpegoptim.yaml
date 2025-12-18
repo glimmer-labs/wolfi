@@ -32,7 +32,6 @@ update:
   enabled: true
   github:
     identifier: tjko/jpegoptim
-    use-tag: true
     strip-prefix: v
 
 test:
