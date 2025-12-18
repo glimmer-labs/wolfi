@@ -46,7 +46,7 @@ jobs:
               mkdir -p "${packageName}"
 
               melange build \
-                --arch ${{ matrix.arch }} \
+                --arch x86_64 \
                 --generate-index=false \
                 -r https://packages.wolfi.dev/os \
                 -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
