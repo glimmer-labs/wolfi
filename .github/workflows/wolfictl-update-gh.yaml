@@ -27,7 +27,7 @@ jobs:
         scope: ${{ github.repository }}
         identity: github-updates
 
-    - uses: wolfi-dev/actions/wolfictl-update-gh@main
+    - uses: ./.github/action/wolfictl-update-gh
       with:
         repository: ${{ github.repository }}
         token: ${{ steps.octo-sts.outputs.token }}

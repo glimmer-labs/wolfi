@@ -27,7 +27,7 @@ jobs:
         scope: ${{ github.repository }}
         identity: release-monitoring-updates
 
-    - uses: wolfi-dev/actions/wolfictl-update-rm@main
+    - uses: ./.github/action/wolfictl-update-rm
       with:
         repository: ${{ github.repository }}
         token: ${{ steps.octo-sts.outputs.token }}
