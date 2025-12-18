@@ -12,25 +12,23 @@ permissions:
 
 jobs:
   build:
-    concurrency:
-      group: build-${{ matrix.os }}
-      cancel-in-progress: false
     strategy:
       matrix:
         include:
           - os: ubuntu-24.04
             arch: x86_64
-            deb: amd64
           - os: ubuntu-24.04-arm
             arch: aarch64
-            deb: arm64
+    concurrency:
+      group: build-${{ matrix.os }}
+      cancel-in-progress: false
     runs-on: ${{ matrix.os }}
     container:
         image: ghcr.io/wolfi-dev/sdk:latest
         options: |
             --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/fuse --security-opt seccomp=unconfined --security-opt apparmor:unconfined
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Trust the github workspace
         run: git config --global --add safe.directory "$(pwd)"
@@ -74,36 +72,50 @@ jobs:
                   $file
           done
 
-      - name: Create repository index
-        run: |
-          if curl --output /dev/null --silent --head --fail https://glimmer-labs.github.io/wolfi/${{ matrix.arch }}/APKINDEX.tar.gz; then
-              curl -o APKINDEX.tar.gz https://glimmer-labs.github.io/wolfi/${{ matrix.arch }}/APKINDEX.tar.gz
-          fi
-          melange index --arch ${{ matrix.arch }} -m --signing-key glimmer-labs-signing.rsa packages/${{ matrix.arch }}/*.apk
-          mv APKINDEX.tar.gz packages/${{ matrix.arch }}/APKINDEX.tar.gz
-
       - name: Archive packages artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.arch }}
           path: packages/
 
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/wolfi-dev/sdk:latest
+      options: |
+          --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/fuse --security-opt seccomp=unconfined --security-opt apparmor:unconfined
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: apk-repository
 
-      - name: Get public key
-        run: echo "${{ secrets.PUBLIC_KEY }}" > glimmer-labs-signing.rsa.pub
+      - name: Get keys
+        run: |
+          echo "*.rsa" > .gitignore # FALLBACK IN CASE glimmer-labs-signing.rsa IS NOT REMOVED
+          echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa # MUST BE REMOVED BEFORE COMMIT
+          echo "${{ secrets.PUBLIC_KEY }}" > glimmer-labs-signing.rsa.pub
 
       - name: Download all workflow artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: .
           merge-multiple: true
+
+      - name: Create/update repository index
+        run: |
+          for arch in x86_64 aarch64; do
+            melange index \
+              --arch ${arch} \
+              --merge \
+              --source packages/${arch}/APKINDEX.tar.gz \
+              --output packages/${arch}/APKINDEX.tar.gz \
+              --signing-key glimmer-labs-signing.rsa \
+              packages/${arch}/*.apk
+          done
+
+      - name: Remove signing key
+        run: rm glimmer-labs-signing.rsa
 
       - name: Commit to GitHub pages branch
         uses: EndBug/add-and-commit@v9
