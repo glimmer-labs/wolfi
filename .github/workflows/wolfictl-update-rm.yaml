@@ -1,0 +1,36 @@
+name: Wolfictl Update From Release Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *" # Triggers the workflow every hour
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GIT_AUTHOR_NAME: Haruki1707
+  GIT_AUTHOR_EMAIL: 72423267+Haruki1707@users.noreply.github.com
+
+jobs:
+  update:
+    name: Wolfictl Update
+    if: github.repository == 'glimmer-labs/wolfi'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: octo-sts/action@v1.1.1
+      id: octo-sts
+      with:
+        scope: ${{ github.repository }}
+        identity: release-monitoring-updates
+
+    - uses: wolfi-dev/actions/wolfictl-update-rm@main
+      with:
+        repository: ${{ github.repository }}
+        token: ${{ steps.octo-sts.outputs.token }}
+        git_author_name: ${{ env.GIT_AUTHOR_NAME }}
+        git_author_email: ${{ env.GIT_AUTHOR_EMAIL }}
+        release_monitor_token: ${{ secrets.RELEASE_MONITOR_TOKEN }}
