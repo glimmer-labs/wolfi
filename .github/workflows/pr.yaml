@@ -41,6 +41,20 @@ jobs:
                   continue
               fi
 
-              MELANGE_RUNNER=bubblewrap make package/"${file%.yaml}"
-              MELANGE_RUNNER=bubblewrap make test/"${file%.yaml}"
+              packageName=${file%.yaml}
+
+              mkdir -p "${packageName}"
+
+              melange build \
+                --arch ${{ matrix.arch }} \
+                --generate-index=false \
+                -r https://packages.wolfi.dev/os \
+                -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
+                -r https://glimmer-labs.github.io/wolfi \
+                -k https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub \
+                --signing-key melange.rsa \
+                --git-repo-url=https://github.com/glimmer-labs/wolfi \
+                --git-commit=${{ github.sha }} \
+                --source-dir=./${packageName} \
+                $file
           done
