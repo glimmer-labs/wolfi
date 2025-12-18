@@ -108,10 +108,10 @@ jobs:
             melange index \
               --arch ${arch} \
               --merge \
-              --source packages/${arch}/APKINDEX.tar.gz \
-              --output packages/${arch}/APKINDEX.tar.gz \
+              --source ${arch}/APKINDEX.tar.gz \
+              --output ${arch}/APKINDEX.tar.gz \
               --signing-key glimmer-labs-signing.rsa \
-              packages/${arch}/*.apk
+              ${arch}/*.apk
           done
 
       - name: Remove signing key
