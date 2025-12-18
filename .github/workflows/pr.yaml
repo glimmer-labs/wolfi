@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "*.yaml"
+      - '!.yam.yaml'
 
 jobs:
   lint:
@@ -43,6 +44,9 @@ jobs:
         id: changes
         uses: tj-actions/changed-files@v47
         with:
+          files_ignore_yaml: |
+            melange:
+              - .yam.yaml
           files_yaml: |
             melange:
               - ./*.yaml
