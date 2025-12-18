@@ -11,8 +11,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Look for changed files
+        id: changes
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            melange:
+              - ./*.yaml
+
       - name: Lint using Wolfictl
         uses: wolfi-dev/actions/wolfictl-lint@main
+        with:
+          args: ${{ steps.changes.outputs.melange_all_changed_files }}
 
   build:
     runs-on: ubuntu-latest
