@@ -7,6 +7,7 @@ on:
     paths:
       - '*.yaml'
       - '!.yam.yaml'
+      - '!tests/*.yaml'
 
 permissions:
   contents: write
@@ -41,6 +42,7 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
+              - tests/*.yaml
           files_yaml: |
             melange:
               - ./*.yaml
