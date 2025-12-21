@@ -6,9 +6,7 @@ on:
     - cron: "0 * * * *" # Triggers the workflow every hour
 
 permissions:
-  issues: write  
-  contents: write
-  pull-requests: write
+  id-token: write
 
 env:
   GIT_AUTHOR_NAME: Haruki1707
@@ -19,12 +17,22 @@ jobs:
     if: github.repository == 'glimmer-labs/wolfi'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+      - uses: octo-sts/action@v1.1.1
+        id: octo-sts
+        with:
+          scope: ${{ github.repository }}
+          identity: melange-updater
+      
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          token: ${{ steps.octo-sts.outputs.token }}
 
-    - uses: glimmer-labs/melange-updater@main
-      with:
-        repository: ${{ github.repository }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        git_author_name: ${{ env.GIT_AUTHOR_NAME }}
-        git_author_email: ${{ env.GIT_AUTHOR_EMAIL }}
-        github-labels: 'request-version-update,automated pr'
+      - uses: glimmer-labs/melange-updater@main
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ steps.octo-sts.outputs.token }}
+          git_author_name: ${{ env.GIT_AUTHOR_NAME }}
+          git_author_email: ${{ env.GIT_AUTHOR_EMAIL }}
+          github-labels: 'request-version-update,automated pr'
+          release-monitor-token: ${{ secrets.RELEASE_MONITOR_TOKEN }}
