@@ -49,6 +49,7 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
+              - tests/*.yaml
           files_yaml: |
             melange:
               - ./*.yaml
@@ -74,6 +75,7 @@ jobs:
                 --signing-key melange.rsa \
                 --git-repo-url=https://github.com/glimmer-labs/wolfi \
                 --git-commit=${{ github.sha }} \
+                --pipeline-dir=./pipelines \
                 --source-dir=./${packageName} \
                 $file
           done

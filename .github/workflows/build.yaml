@@ -74,6 +74,7 @@ jobs:
                   --signing-key glimmer-labs-signing.rsa \
                   --git-repo-url=https://github.com/glimmer-labs/wolfi \
                   --git-commit=${{ github.sha }} \
+                  --pipeline-dir=./pipelines \
                   --source-dir=./${packageName} \
                   $file
           done
