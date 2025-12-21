@@ -5,6 +5,7 @@ on:
     paths:
       - "*.yaml"
       - '!.yam.yaml'
+      - '!tests/*.yaml'
 
 jobs:
   lint:
@@ -19,6 +20,7 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
+              - tests/*.yaml
           files_yaml: |
             melange:
               - ./*.yaml
