@@ -34,5 +34,5 @@ jobs:
           token: ${{ steps.octo-sts.outputs.token }}
           git_author_name: ${{ env.GIT_AUTHOR_NAME }}
           git_author_email: ${{ env.GIT_AUTHOR_EMAIL }}
-          github-labels: 'request-version-update,automated pr'
-          release-monitor-token: ${{ secrets.RELEASE_MONITOR_TOKEN }}
+          github_labels: 'request-version-update,automated pr'
+          release_monitor_token: ${{ secrets.RELEASE_MONITOR_TOKEN }}
