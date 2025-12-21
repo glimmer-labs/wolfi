@@ -1,6 +1,7 @@
 name: Build and Publish Wolfi packages on GitHub pages
 
 on:
+  workflow_dispatch:
   push:
     branches: 
       - main
@@ -96,6 +97,9 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: apk-repository
+
+      - name: Trust the github workspace
+        run: git config --global --add safe.directory "$(pwd)"
 
       - name: Get keys
         run: |
