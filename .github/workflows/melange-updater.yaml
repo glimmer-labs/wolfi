@@ -1,4 +1,4 @@
-name: Wolfictl Update From GitHub
+name: Melange Updater (GitHub and Release Monitor)
 
 on:
   workflow_dispatch:
@@ -6,8 +6,9 @@ on:
     - cron: "0 * * * *" # Triggers the workflow every hour
 
 permissions:
-  contents: read
-  id-token: write
+  issues: write  
+  contents: write
+  pull-requests: write
 
 env:
   GIT_AUTHOR_NAME: Haruki1707
@@ -15,21 +16,15 @@ env:
 
 jobs:
   update:
-    name: Wolfictl Update
     if: github.repository == 'glimmer-labs/wolfi'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
 
-    - uses: octo-sts/action@v1.1.1
-      id: octo-sts
-      with:
-        scope: ${{ github.repository }}
-        identity: github-updates
-
-    - uses: ./.github/action/wolfictl-update-gh
+    - uses: glimmer-labs/melange-updater@main
       with:
         repository: ${{ github.repository }}
-        token: ${{ steps.octo-sts.outputs.token }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         git_author_name: ${{ env.GIT_AUTHOR_NAME }}
         git_author_email: ${{ env.GIT_AUTHOR_EMAIL }}
+        github-labels: 'request-version-update,automated pr'
