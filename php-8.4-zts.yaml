@@ -2,7 +2,7 @@ package:
   name: php-8.4-zts
   version: 8.4.16
   epoch: 0
-  description: "the PHP programming language"
+  description: "the PHP programming language with Zend Thread Safety (ZTS) enabled"
   copyright:
     - license: PHP-3.01
   dependencies:
