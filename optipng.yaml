@@ -34,8 +34,7 @@ pipeline:
   - uses: cmake/install
 
   - name: Make binary executable
-    runs: |
-      chmod +x /home/build/melange-out/optipng/usr/bin/optipng
+    runs: chmod +x ${{targets.destdir}}/usr/bin/optipng
 
   - uses: strip
 
