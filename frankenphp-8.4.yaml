@@ -9,6 +9,7 @@ package:
     runtime:
       - libwatcher-c
       - php-8.4-zts
+      - php-8.4-zts-dev
 
 environment:
   contents:
@@ -45,7 +46,7 @@ pipeline:
       export CGO_ENABLED=1
       export XCADDY_GO_BUILD_FLAGS="-ldflags '-w -s -X \"github.com/caddyserver/caddy/v2.CustomVersion=FrankenPHP (WolfiOS) ${{ package.version }} Caddy\"' -tags=nobadger,nomysql,nopgx"
       export CGO_CFLAGS="-DFRANKENPHP_VERSION=${{package.version}} $(php-config --includes)"
-      export CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs)"
+      export CGO_LDFLAGS="-Wl,-rpath,$(php-config --lib-dir) -L$(php-config --lib-dir) $(php-config --ldflags) $(php-config --libs)"
 
       mkdir -p ${{targets.destdir}}/usr/bin/
 
@@ -58,6 +59,34 @@ pipeline:
         --with github.com/dunglas/vulcain/caddy
 
   - uses: strip
+
+test:
+  environment:
+    contents:
+      packages:
+        - frankenphp-8.4
+  pipeline:
+    - name: Verify Version String
+      runs: |
+        frankenphp version | tee /tmp/frankenphp-version.txt
+        grep -q "FrankenPHP (WolfiOS) ${{package.version}}" /tmp/frankenphp-version.txt
+    - name: Validate Minimal Config
+      runs: |
+        cat > /tmp/Caddyfile <<'EOF'
+        {
+          admin off
+        }
+
+        :8080 {
+          respond "ok"
+        }
+        EOF
+        frankenphp validate --config /tmp/Caddyfile
+    - name: Check FrankenPHP Module
+      runs: |
+        frankenphp list-modules | tee /tmp/frankenphp-modules.txt
+        grep -q 'frankenphp' /tmp/frankenphp-modules.txt
+    - uses: test/tw/ldd-check
 
 update:
   enabled: true
