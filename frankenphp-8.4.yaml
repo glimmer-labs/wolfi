@@ -1,0 +1,67 @@
+package:
+  name: frankenphp-8.4
+  version: 1.11.0
+  epoch: 0
+  description: "The Modern PHP App Server, written in Go"
+  copyright:
+    - license: MIT
+  dependencies:
+    runtime:
+      - libwatcher-c
+      - php-8.4-zts
+
+environment:
+  contents:
+    packages:
+      - autoconf
+      - brotli-dev
+      - build-base
+      - busybox
+      - caddy-src
+      - go
+      - libwatcher-c-dev
+      - libxml2-dev
+      - pcre2-dev
+      - php-8.4-zts
+      - php-8.4-zts-dev
+      - readline-dev
+      - sqlite-dev
+      - xcaddy
+
+pipeline:
+  - uses: git-checkout
+    with:
+      repository: https://github.com/php/frankenphp
+      tag: "v${{package.version}}"
+      expected-commit: 6231bf4a1c77e9f59e2783f5586a540337f8f38c
+
+  - name: Prepare Caddyfile
+    runs: |
+      mkdir -p "${{targets.destdir}}/etc/caddy/"
+      cp caddy/frankenphp/Caddyfile "${{targets.destdir}}/etc/caddy/Caddyfile"
+
+  - name: Build
+    runs: |
+      export CGO_ENABLED=1
+      export XCADDY_GO_BUILD_FLAGS="-ldflags '-w -s -X \"github.com/caddyserver/caddy/v2.CustomVersion=FrankenPHP (WolfiOS) ${{ package.version }} Caddy\"' -tags=nobadger,nomysql,nopgx"
+      export CGO_CFLAGS="-DFRANKENPHP_VERSION=${{package.version}} $(php-config --includes)"
+      export CGO_LDFLAGS="$(php-config --ldflags) $(php-config --libs)"
+
+      mkdir -p ${{targets.destdir}}/usr/bin/
+
+      xcaddy build \
+        --output ${{targets.destdir}}/usr/bin/frankenphp \
+        --with github.com/dunglas/frankenphp=./ \
+        --with github.com/dunglas/frankenphp/caddy=./caddy/ \
+        --with github.com/dunglas/caddy-cbrotli \
+        --with github.com/dunglas/mercure/caddy \
+        --with github.com/dunglas/vulcain/caddy
+
+  - uses: strip
+
+update:
+  enabled: true
+  github:
+    identifier: php/frankenphp
+    strip-prefix: v
+    tag-filter: v
