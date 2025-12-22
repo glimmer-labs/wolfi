@@ -290,6 +290,10 @@ subpackages:
           mkdir -p ${{targets.subpkgdir}}/usr/bin
           mv ${{targets.destdir}}/usr/bin/phpize ${{targets.subpkgdir}}/usr/bin/
           mv ${{targets.destdir}}/usr/lib ${{targets.subpkgdir}}/usr
+          # Keep runtime libphp.so in main package so dependents (e.g. frankenphp) can link at runtime.
+          mkdir -p ${{targets.destdir}}/usr/lib/php
+          cp ${{targets.subpkgdir}}/usr/lib/php/libphp.so ${{targets.destdir}}/usr/lib/php/libphp.so
+          ln -sf /usr/lib/php/libphp.so ${{targets.destdir}}/usr/lib/libphp.so
     test:
       pipeline:
         - uses: test/virtualpackage
