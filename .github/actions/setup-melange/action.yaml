@@ -1,0 +1,23 @@
+name: 'Set melange docker action'
+description: 'Sets up melange command using Docker'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Docker availability
+      shell: bash
+      run: |
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "Docker is required but not available in PATH" >&2
+          exit 1
+        fi
+
+    - name: Create melange script
+      shell: bash
+      run: |
+        cat <<'EOF' >/usr/local/bin/melange
+        #!/usr/bin/env bash
+        set -euo pipefail
+        docker run --privileged --rm -v "${PWD}":/work cgr.dev/chainguard/melange "$@"
+        EOF
+        chmod +x /usr/local/bin/melange
