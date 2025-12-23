@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-melange
+      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
 
       - name: Look for changed files
         id: changes
@@ -82,7 +82,7 @@ jobs:
         with:
           ref: apk-repository
 
-      - uses: ./.github/actions/setup-melange
+      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
 
       - name: Get keys
         run: |
