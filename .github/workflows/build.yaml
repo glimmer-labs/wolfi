@@ -45,6 +45,12 @@ jobs:
       - name: Get signing key
         run: echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa
 
+      - name: APK cache
+        uses: actions/cache@v5
+        with:
+          path: apk-cache
+          key: ${{ matrix.arch }}-apk-cache
+              
       - name: Build packages
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
@@ -54,18 +60,19 @@ jobs:
               mkdir -p "${packageName}"
 
               melange build \
-                  --arch ${{ matrix.arch }} \
-                  --generate-index=false \
-                  -r https://packages.wolfi.dev/os \
-                  -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
-                  -r https://glimmer-labs.github.io/wolfi \
-                  -k https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub \
-                  --signing-key glimmer-labs-signing.rsa \
-                  --git-repo-url=https://github.com/glimmer-labs/wolfi \
-                  --git-commit=${{ github.sha }} \
-                  --pipeline-dir=./pipelines \
-                  --source-dir=./${packageName} \
-                  $file
+                --apk-cache-dir apk-cache \
+                --arch ${{ matrix.arch }} \
+                --generate-index=false \
+                -r https://packages.wolfi.dev/os \
+                -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
+                -r https://glimmer-labs.github.io/wolfi \
+                -k https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub \
+                --signing-key glimmer-labs-signing.rsa \
+                --git-repo-url=https://github.com/glimmer-labs/wolfi \
+                --git-commit=${{ github.sha }} \
+                --pipeline-dir=./pipelines \
+                --source-dir=./${packageName} \
+                $file
           done
 
       - name: Archive packages artifact
