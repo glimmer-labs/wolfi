@@ -20,7 +20,6 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
-              - tests/*.yaml
           files_yaml: |
             melange:
               - ./*.yaml
@@ -30,17 +29,12 @@ jobs:
         with:
           args: ${{ steps.changes.outputs.melange_all_changed_files }}
 
-  build:
+  build-test:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/wolfi-dev/sdk:latest
-      options: |
-        --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/fuse --security-opt seccomp=unconfined --security-opt apparmor:unconfined
     steps:
       - uses: actions/checkout@v6
 
-      - name: Generate key
-        run: melange keygen
+      - uses: ./.github/actions/setup-melange
 
       - name: Look for changed files
         id: changes
@@ -49,18 +43,15 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
-              - tests/*.yaml
           files_yaml: |
             melange:
               - ./*.yaml
       
       - name: Build all packages
         run: |
-          for file in ${{ steps.changes.outputs.melange_all_changed_files }}; do
-              if [[ $file == ".yam.yaml" ]]; then
-                  continue
-              fi
+          melange keygen
 
+          for file in ${{ steps.changes.outputs.melange_all_changed_files }}; do
               packageName=${file%.yaml}
 
               mkdir -p "${packageName}"
