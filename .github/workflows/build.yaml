@@ -26,15 +26,10 @@ jobs:
       group: build-${{ matrix.os }}
       cancel-in-progress: false
     runs-on: ${{ matrix.os }}
-    container:
-        image: ghcr.io/wolfi-dev/sdk:latest
-        options: |
-            --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/fuse --security-opt seccomp=unconfined --security-opt apparmor:unconfined
     steps:
       - uses: actions/checkout@v6
 
-      - name: Trust the github workspace
-        run: git config --global --add safe.directory "$(pwd)"
+      - uses: ./.github/actions/setup-melange
 
       - name: Look for changed files
         id: changes
@@ -43,24 +38,17 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
-              - tests/*.yaml
           files_yaml: |
             melange:
               - ./*.yaml
-
-      - name: Create packages directory
-        run: mkdir -p packages
 
       - name: Get signing key
         run: echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa
 
       - name: Build packages
         run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
           for file in ${{ steps.changes.outputs.melange_all_changed_files }}; do
-              if [[ $file == ".yam.yaml" ]]; then
-                  continue
-              fi
-
               packageName=${file%.yaml}
 
               mkdir -p "${packageName}"
@@ -88,18 +76,13 @@ jobs:
 
   publish:
     needs: build
-    runs-on: ubuntu-24.04
-    container:
-      image: ghcr.io/wolfi-dev/sdk:latest
-      options: |
-          --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/fuse --security-opt seccomp=unconfined --security-opt apparmor:unconfined
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           ref: apk-repository
 
-      - name: Trust the github workspace
-        run: git config --global --add safe.directory "$(pwd)"
+      - uses: ./.github/actions/setup-melange
 
       - name: Get keys
         run: |
