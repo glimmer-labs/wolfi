@@ -6,6 +6,8 @@ package:
   copyright:
     - license: MIT
   dependencies:
+    provides:
+      - frankenphp=${{package.full-version}}
     runtime:
       - libwatcher-c
       - php-8.4-zts-dev=~8.4.16
