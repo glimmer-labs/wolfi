@@ -7,7 +7,7 @@ package:
     - license: PHP-3.01
   dependencies:
     provides:
-      - php=${{package.full-version}}
+      - php-zts=${{package.full-version}}
     runtime:
       - ${{package.name}}-config
       - libxml2
@@ -214,7 +214,7 @@ subpackages:
   - name: ${{package.name}}-config
     dependencies:
       provides:
-        - php-config=${{package.full-version}}
+        - php-zts-config=${{package.full-version}}
       runtime:
         - merged-bin
         - merged-usrsbin
@@ -234,7 +234,7 @@ subpackages:
         - merged-usrsbin
         - wolfi-baselayout
       provides:
-        - php-${{range.key}}=${{package.full-version}}
+        - php-zts-${{range.key}}=${{package.full-version}}
     pipeline:
       - runs: |
           export EXTENSIONS_DIR=usr/lib/php/modules
@@ -250,7 +250,7 @@ subpackages:
     description: "The ${{range.value}} extension configuration"
     dependencies:
       provides:
-        - php-${{range.key}}-config=${{package.full-version}}
+        - php-zts-${{range.key}}-config=${{package.full-version}}
       runtime:
         - merged-bin
         - merged-usrsbin
@@ -275,7 +275,7 @@ subpackages:
     description: PHP ${{vars.phpMM}} development headers
     dependencies:
       provides:
-        - php-dev=${{package.full-version}}
+        - php-zts-dev=${{package.full-version}}
       runtime:
         - merged-bin
         - merged-usrsbin
@@ -297,7 +297,7 @@ subpackages:
     description: PHP ${{vars.phpMM}} documentation
     dependencies:
       provides:
-        - php-doc=${{package.full-version}}
+        - php-zts-doc=${{package.full-version}}
       runtime:
         - merged-bin
         - merged-usrsbin
@@ -312,7 +312,7 @@ subpackages:
     description: PHP ${{vars.phpMM}} CGI
     dependencies:
       provides:
-        - php-cgi=${{package.full-version}}
+        - php-zts-cgi=${{package.full-version}}
       runtime:
         - merged-bin
         - merged-usrsbin
@@ -332,7 +332,7 @@ subpackages:
     description: Interactive PHP Debugger
     dependencies:
       provides:
-        - php-dbg=${{package.full-version}}
+        - php-zts-dbg=${{package.full-version}}
       runtime:
         - merged-bin
         - merged-usrsbin
@@ -357,7 +357,7 @@ subpackages:
         - merged-usrsbin
         - wolfi-baselayout
       provides:
-        - php-fpm=${{package.full-version}}
+        - php-zts-fpm=${{package.full-version}}
     pipeline:
       - runs: |
           mkdir -p ${{targets.subpkgdir}}/usr/bin
@@ -373,7 +373,7 @@ subpackages:
     description: PHP ${{vars.phpMM}} FastCGI Process Manager (FPM) configuration
     dependencies:
       provides:
-        - php-fpm-config=${{package.full-version}}
+        - php-zts-fpm-config=${{package.full-version}}
       runtime:
         - merged-bin
         - merged-usrsbin
