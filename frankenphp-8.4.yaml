@@ -1,7 +1,7 @@
 package:
   name: frankenphp-8.4
   version: "1.11.1"
-  epoch: 1
+  epoch: 2
   description: "The Modern PHP App Server, written in Go"
   copyright:
     - license: MIT
