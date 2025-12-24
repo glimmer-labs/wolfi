@@ -81,6 +81,10 @@ jobs:
           name: ${{ matrix.arch }}
           path: packages/
 
+      - name: Fix APK cache permissions for upload
+        if: always()
+        run: sudo chown -R $USER:$USER apk-cache || true
+
   publish:
     needs: build
     runs-on: ubuntu-latest
