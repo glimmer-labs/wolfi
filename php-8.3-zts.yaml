@@ -208,6 +208,9 @@ data:
       ftp: FTP
       sysvsem: System V Semaphores
       sysvshm: System V Shared Memory
+      shmop: Shared Memory Operations
+      sysvmsg: System V Message Queues
+      ffi: FFI
 
 subpackages:
   - name: ${{package.name}}-config
