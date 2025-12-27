@@ -1,0 +1,99 @@
+package:
+  name: frankenphp-8.3
+  version: "1.11.1"
+  epoch: 0
+  description: "The Modern PHP App Server, written in Go"
+  copyright:
+    - license: MIT
+  dependencies:
+    provides:
+      - frankenphp=${{package.full-version}}
+    runtime:
+      - libwatcher-c
+      - php-8.3-zts-dev=~8.3.29
+      - php-8.3-zts=~8.3.29
+
+environment:
+  contents:
+    packages:
+      - autoconf
+      - brotli-dev
+      - build-base
+      - busybox
+      - caddy-src
+      - go
+      - libwatcher-c-dev
+      - libxml2-dev
+      - pcre2-dev
+      - php-8.3-zts-dev=~8.3.29
+      - php-8.3-zts=~8.3.29
+      - readline-dev
+      - sqlite-dev
+      - xcaddy
+
+pipeline:
+  - uses: git-checkout
+    with:
+      repository: https://github.com/php/frankenphp
+      tag: "v${{package.version}}"
+      expected-commit: 84b48c3ad2baee74c27d7bb58b99f030e1b99986
+
+  - name: Prepare Caddyfile
+    runs: |
+      mkdir -p "${{targets.destdir}}/etc/caddy/"
+      cp caddy/frankenphp/Caddyfile "${{targets.destdir}}/etc/caddy/Caddyfile"
+
+  - name: Build
+    runs: |
+      export CGO_ENABLED=1
+      export XCADDY_GO_BUILD_FLAGS="-ldflags '-w -s -X \"github.com/caddyserver/caddy/v2.CustomVersion=FrankenPHP (WolfiOS) ${{ package.version }} Caddy\"' -tags=nobadger,nomysql,nopgx"
+      export CGO_CFLAGS="-DFRANKENPHP_VERSION=${{package.version}} $(php-config --includes)"
+      # PHP 8.3 and below doesn't support --lib-dir flag, so we hardcode the path here
+      export CGO_LDFLAGS="-Wl,-rpath,/usr/lib/php -L/usr/lib/php $(php-config --ldflags) $(php-config --libs)"
+
+      mkdir -p ${{targets.destdir}}/usr/bin/
+
+      xcaddy build \
+        --output ${{targets.destdir}}/usr/bin/frankenphp \
+        --with github.com/dunglas/frankenphp=./ \
+        --with github.com/dunglas/frankenphp/caddy=./caddy/ \
+        --with github.com/dunglas/caddy-cbrotli \
+        --with github.com/dunglas/mercure/caddy \
+        --with github.com/dunglas/vulcain/caddy
+
+  - uses: strip
+
+test:
+  environment:
+    contents:
+      packages:
+        - frankenphp-8.3
+  pipeline:
+    - name: Verify Version String
+      runs: |
+        frankenphp version | tee /tmp/frankenphp-version.txt
+        grep -q "FrankenPHP (WolfiOS) ${{package.version}}" /tmp/frankenphp-version.txt
+    - name: Validate Minimal Config
+      runs: |
+        cat > /tmp/Caddyfile <<'EOF'
+        {
+          admin off
+        }
+
+        :8080 {
+          respond "ok"
+        }
+        EOF
+        frankenphp validate --config /tmp/Caddyfile
+    - name: Check FrankenPHP Module
+      runs: |
+        frankenphp list-modules | tee /tmp/frankenphp-modules.txt
+        grep -q 'frankenphp' /tmp/frankenphp-modules.txt
+    - uses: test/tw/ldd-check
+
+update:
+  enabled: true
+  github:
+    identifier: php/frankenphp
+    strip-prefix: v
+    tag-filter: v
