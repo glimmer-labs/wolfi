@@ -63,9 +63,9 @@ test:
   environment:
     contents:
       packages:
-        - php-zts-${{vars.phpMM}}
-        - php-zts-${{vars.phpMM}}-grpc
-        - php-zts-${{vars.phpMM}}-grpc-config
+        - php-${{vars.phpMM}}-zts
+        - php-${{vars.phpMM}}-zts-grpc
+        - php-${{vars.phpMM}}-zts-grpc-config
         - grpc
   pipeline:
     - name: Verify gRPC Extension
