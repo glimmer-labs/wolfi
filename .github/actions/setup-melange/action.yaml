@@ -12,6 +12,11 @@ runs:
           exit 1
         fi
 
+    - name: Pull melange image
+      shell: bash
+      run: |
+        docker pull cgr.dev/chainguard/melange:latest
+
     - name: Create melange script
       shell: bash
       run: |
