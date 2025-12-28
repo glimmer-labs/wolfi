@@ -1,4 +1,4 @@
-name: Build and Publish Wolfi packages on GitHub pages
+name: Build and Publish Wolfi packages on 'apk-repository' branch
 
 on:
   workflow_dispatch:

@@ -1,0 +1,68 @@
+name: Deploy branch to GitHub Pages
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "Build and Publish Wolfi packages on 'apk-repository' branch"
+    types:
+      - completed
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pages: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: apk-repository
+          fetch-depth: 0
+
+      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
+
+      - name: Get keys
+        run: |
+          echo "*.rsa" > .gitignore # FALLBACK IN CASE glimmer-labs-signing.rsa IS NOT REMOVED
+          echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa # MUST BE REMOVED BEFORE COMMIT
+          echo "${{ secrets.PUBLIC_KEY }}" > glimmer-labs-signing.rsa.pub
+
+      - name: Create/update repository index
+        run: |
+          for arch in x86_64 aarch64; do
+            melange index \
+              --arch ${arch} \
+              --merge \
+              --source ${arch}/APKINDEX.tar.gz \
+              --output ${arch}/APKINDEX.tar.gz \
+              --signing-key glimmer-labs-signing.rsa \
+              ${arch}/*.apk
+          done
+
+      - name: Remove signing key
+        run: rm glimmer-labs-signing.rsa
+
+      - name: Commit packages to GitHub pages branch
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: .
+          message: "Create/update APK repository indexes"
+
+      - name: Upload APK repository artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
