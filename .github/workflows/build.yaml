@@ -14,39 +14,52 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            arch: x86_64
-          - os: ubuntu-24.04-arm
-            arch: aarch64
-    concurrency:
-      group: build-${{ matrix.os }}
-      cancel-in-progress: false
-    runs-on: ${{ matrix.os }}
+  changed-files:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.changes.outputs.melange_all_changed_files }}
     steps:
       - uses: actions/checkout@v6
-
-      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
 
       - name: Look for changed files
         id: changes
         uses: tj-actions/changed-files@v47
         with:
+          matrix: true
           files_ignore_yaml: |
             melange:
               - .yam.yaml
           files_yaml: |
             melange:
               - ./*.yaml
+      
+      - name: List all changed files
+        run: echo '${{ steps.changes.outputs.melange_all_changed_files }}'
+        
+  build:
+    needs: changed-files
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.changed-files.outputs.matrix) }}
+        include:
+          - os: ubuntu-24.04
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+    concurrency:
+      group: build-${{ matrix.package }}-${{ matrix.os }}
+      cancel-in-progress: false
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.package }} | ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
 
       - name: Get signing key
         run: echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa
 
-      - name: APK cache
-        uses: actions/cache@v5
+      - uses: actions/cache@v5
         with:
           path: apk-cache
           key: ${{ matrix.arch }}-apk-cache
@@ -54,31 +67,29 @@ jobs:
       - name: Build packages
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
-          for file in ${{ steps.changes.outputs.melange_all_changed_files }}; do
-              packageName=${file%.yaml}
 
-              mkdir -p "${packageName}"
+          packageName=${{ matrix.package }}
+          packageName=${packageName%.yaml}
 
-              melange build \
-                --apk-cache-dir apk-cache \
-                --arch ${{ matrix.arch }} \
-                --generate-index=false \
-                -r https://packages.wolfi.dev/os \
-                -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
-                -r https://glimmer-labs.github.io/wolfi \
-                -k https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub \
-                --signing-key glimmer-labs-signing.rsa \
-                --git-repo-url=https://github.com/glimmer-labs/wolfi \
-                --git-commit=${{ github.sha }} \
-                --pipeline-dir=./pipelines \
-                --source-dir=./${packageName} \
-                $file
-          done
+          melange build \
+            -r https://packages.wolfi.dev/os \
+            -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
+            -r https://glimmer-labs.github.io/wolfi \
+            -k https://glimmer-labs.github.io/wolfi/glimmer-labs-signing.rsa.pub \
+            --arch ${{ matrix.arch }} \
+            --generate-index=false \
+            --apk-cache-dir apk-cache \
+            --signing-key glimmer-labs-signing.rsa \
+            --git-repo-url=https://github.com/glimmer-labs/wolfi \
+            --git-commit=${{ github.sha }} \
+            --pipeline-dir=./pipelines \
+            --source-dir=./${packageName} \
+            ${{ matrix.package }}
 
       - name: Archive packages artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ matrix.arch }}
+          name: ${{ matrix.package }}-${{ matrix.arch }}
           path: packages/
 
       - name: Fix APK cache permissions for upload
@@ -93,36 +104,16 @@ jobs:
         with:
           ref: apk-repository
 
-      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
-
-      - name: Get keys
-        run: |
-          echo "*.rsa" > .gitignore # FALLBACK IN CASE glimmer-labs-signing.rsa IS NOT REMOVED
-          echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa # MUST BE REMOVED BEFORE COMMIT
-          echo "${{ secrets.PUBLIC_KEY }}" > glimmer-labs-signing.rsa.pub
-
       - name: Download all workflow artifacts
         uses: actions/download-artifact@v7
         with:
           path: .
           merge-multiple: true
 
-      - name: Create/update repository index
-        run: |
-          for arch in x86_64 aarch64; do
-            melange index \
-              --arch ${arch} \
-              --merge \
-              --source ${arch}/APKINDEX.tar.gz \
-              --output ${arch}/APKINDEX.tar.gz \
-              --signing-key glimmer-labs-signing.rsa \
-              ${arch}/*.apk
-          done
+      - name: Set .gitignore
+        run: echo "*.rsa" > .gitignore # FALLBACK IN CASE glimmer-labs-signing.rsa IS PRESENT
 
-      - name: Remove signing key
-        run: rm glimmer-labs-signing.rsa
-
-      - name: Commit to GitHub pages branch
+      - name: Commit packages to GitHub pages branch
         uses: EndBug/add-and-commit@v9
         with:
           add: .
