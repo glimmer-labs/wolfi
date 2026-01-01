@@ -53,8 +53,6 @@ subpackages:
 
 update:
   enabled: true
-  ignore-regex-patterns:
-    - "*-alpha"
   github:
     identifier: php-decimal/ext-decimal
     strip-prefix: v
