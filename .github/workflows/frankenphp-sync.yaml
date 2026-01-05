@@ -1,0 +1,102 @@
+name: Sync FrankenPHP With PHP ZTS
+
+on:
+  pull_request:
+    paths:
+      - "php-*-zts.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "php-*-zts.yaml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  changed-files:
+    if: github.repository == 'glimmer-labs/wolfi'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.changes.outputs.melange_all_changed_files }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Look for changed files
+        id: changes
+        uses: tj-actions/changed-files@v47
+        with:
+          matrix: true
+          files_yaml: |
+            melange:
+              - ./php-*-zts.yaml
+
+      - name: List all changed files
+        run: echo '${{ steps.changes.outputs.melange_all_changed_files }}'
+
+  sync:
+    if: github.repository == 'glimmer-labs/wolfi'
+    runs-on: ubuntu-latest
+    needs: changed-files
+    strategy:
+      matrix:
+        phpfile: ${{ fromJson(needs.changed-files.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Ensure base ref is present
+        run: git fetch origin "main" || true
+
+      - name: Update FrankenPHP required PHP ZTS version
+        env:
+          BASE_REF: main
+          PHP_FILE: ${{ matrix.phpfile }}
+        run: |
+          set -euo pipefail
+
+          path="$PHP_FILE"
+          [[ $path =~ ^php-([0-9]+\.[0-9]+)-zts\.yaml$ ]] || { echo "Skip $path"; exit 0; }
+          mm="${BASH_REMATCH[1]}"
+          target="frankenphp-${mm}.yaml"
+          [[ -f "$target" ]] || { echo "Skip $path: $target missing"; exit 0; }
+
+          old_version=$(git show "origin/${BASE_REF}:${path}" | yq -r '.package.version' 2>/dev/null || true)
+          new_version=$(yq -r '.package.version' "$path")
+          old_version=${old_version%\"}; old_version=${old_version#\"}
+          new_version=${new_version%\"}; new_version=${new_version#\"}
+
+          if [[ -n "$old_version" && "$old_version" == "$new_version" ]]; then
+            echo "$path: version unchanged (${new_version})"
+            exit 0
+          fi
+
+          sed -i \
+            -e "s|php-${mm}-zts=~[0-9]\+[.][0-9]\+[.][0-9]\+|php-${mm}-zts=~${new_version}|g" \
+            -e "s|php-${mm}-zts-dev=~[0-9]\+[.][0-9]\+[.][0-9]\+|php-${mm}-zts-dev=~${new_version}|g" \
+            "$target"
+
+          echo "UPDATED_MM=${mm}" >> "$GITHUB_ENV"
+          echo "UPDATED_VER=${new_version}" >> "$GITHUB_ENV"
+
+      - name: Create draft PR
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: "Sync frankenphp-${{ env.UPDATED_MM }} deps to PHP ${{ env.UPDATED_VER }} ZTS"
+          title: "Sync frankenphp-${{ env.UPDATED_MM }} deps with PHP ${{ env.UPDATED_VER }} ZTS"
+          body: |
+            Automated alignment of frankenphp-${{ env.UPDATED_MM }} with PHP ZTS bump to ${{ env.UPDATED_VER }}.
+
+            - Base branch: ${{ github.ref }}
+            - Trigger: ${{ github.event_name }}
+            - FrankenPHP: ${{ env.UPDATED_MM }}
+            - PHP version detected: ${{ env.UPDATED_VER }}
+
+            When this PHP version is available in the APK repository, undraft this PR and bump epoch.
+          branch: chore/frankenphp-sync-${{ env.UPDATED_MM }}-${{ github.run_id }}
+          base: main
+          draft: true
+
