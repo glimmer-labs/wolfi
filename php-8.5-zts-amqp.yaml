@@ -34,10 +34,6 @@ pipeline:
       tag: "v${{package.version}}"
       expected-commit: aa233ad7b19a2ca14e1b13a16cb4b5720aa3ef6c
 
-  - uses: patch
-    with:
-      patches: fix-build-with-php-8.5.patch
-
   - name: Prepare build
     runs: phpize
 
