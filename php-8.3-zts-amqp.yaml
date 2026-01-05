@@ -1,7 +1,7 @@
 package:
   name: php-8.3-zts-amqp
-  version: 2.1.2
-  epoch: 4
+  version: "2.2.0"
+  epoch: 0
   description: "PHP extension to communicate with any AMQP compliant server"
   copyright:
     - license: PHP-3.01
@@ -32,7 +32,7 @@ pipeline:
     with:
       repository: https://github.com/php-amqp/php-amqp
       tag: "v${{package.version}}"
-      expected-commit: 82424ed50eb10cd97777e2aabf0f2a0887faf447
+      expected-commit: aa233ad7b19a2ca14e1b13a16cb4b5720aa3ef6c
 
   - name: Prepare build
     runs: phpize
