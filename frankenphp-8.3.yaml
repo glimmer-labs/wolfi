@@ -10,8 +10,8 @@ package:
       - frankenphp=${{package.full-version}}
     runtime:
       - libwatcher-c
-      - php-8.3-zts-dev=~8.3.29
-      - php-8.3-zts=~8.3.29
+      - php-8.3-zts-dev=~8.3.30
+      - php-8.3-zts=~8.3.30
 
 environment:
   contents:
@@ -25,8 +25,8 @@ environment:
       - libwatcher-c-dev
       - libxml2-dev
       - pcre2-dev
-      - php-8.3-zts-dev=~8.3.29
-      - php-8.3-zts=~8.3.29
+      - php-8.3-zts-dev=~8.3.30
+      - php-8.3-zts=~8.3.30
       - readline-dev
       - sqlite-dev
       - xcaddy
