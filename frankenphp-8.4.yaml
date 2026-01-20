@@ -1,7 +1,7 @@
 package:
   name: frankenphp-8.4
   version: "1.11.1"
-  epoch: 0
+  epoch: 1
   description: "The Modern PHP App Server, written in Go"
   copyright:
     - license: MIT
@@ -10,8 +10,8 @@ package:
       - frankenphp=${{package.full-version}}
     runtime:
       - libwatcher-c
-      - php-8.4-zts-dev=~8.4.16
-      - php-8.4-zts=~8.4.16
+      - php-8.4-zts-dev=~8.4.17
+      - php-8.4-zts=~8.4.17
 
 environment:
   contents:
@@ -25,8 +25,8 @@ environment:
       - libwatcher-c-dev
       - libxml2-dev
       - pcre2-dev
-      - php-8.4-zts-dev=~8.4.16
-      - php-8.4-zts=~8.4.16
+      - php-8.4-zts-dev=~8.4.17
+      - php-8.4-zts=~8.4.17
       - readline-dev
       - sqlite-dev
       - xcaddy
