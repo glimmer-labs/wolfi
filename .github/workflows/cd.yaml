@@ -1,4 +1,4 @@
-name: Build and Publish Wolfi packages on 'apk-repository' branch
+name: Build and Deploy Wolfi packages
 
 on:
   workflow_dispatch:
@@ -97,25 +97,49 @@ jobs:
         if: always()
         run: sudo chown -R $USER:$USER apk-cache || true
 
-  publish:
+  deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: apk-repository
-
       - name: Download all workflow artifacts
         uses: actions/download-artifact@v7
         with:
           path: .
-          merge-multiple: true
+          merge-multiple: true 
 
-      - name: Set .gitignore
-        run: echo "*.rsa" > .gitignore # FALLBACK IN CASE glimmer-labs-signing.rsa IS PRESENT
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.APK_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.APK_DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Commit packages to GitHub pages branch
-        uses: EndBug/add-and-commit@v9
-        with:
-          add: .
-          message: "Publish changes from commit ${{ github.sha }}"
+      - name: Upload APKs
+        run: rsync -avz --ignore-existing --partial x86_64/ aarch64/ ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }}:/apk
+
+      - name: Regenerate APK index
+        run: |
+          ssh ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }} << EOF
+            set -e
+            cd /apk
+
+            for arch in x86_64 aarch64; do
+              docker run --rm \
+                -v "\$(pwd)":/work \
+                -v "/home/${{ secrets.APK_DEPLOY_USER }}/glimmer-labs-signing.rsa:/key/signing.rsa:ro" \
+                cgr.dev/chainguard/melange index \
+                  --arch \$arch \
+                  --merge \
+                  --source \$arch/APKINDEX.tar.gz \
+                  --output \$arch/APKINDEX.tar.gz \
+                  --signing-key /key/signing.rsa \
+                  \$arch/*.apk
+            done
+          EOF
+
+      - name: Purge cache
+        uses: jakejarvis/cloudflare-purge-action@master
+        env:
+          CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+          PURGE_URLS: '["https://wolfi.glimmerlabs.dev/x86_64/APKINDEX.tar.gz", "https://wolfi.glimmerlabs.dev/aarch64/APKINDEX.tar.gz"]'
