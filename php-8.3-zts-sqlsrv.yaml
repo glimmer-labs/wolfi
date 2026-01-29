@@ -1,8 +1,8 @@
 package:
-  name: php-8.5-zts-pecl-sqlsrv
+  name: php-8.3-zts-sqlsrv
   version: 5.12.0
-  epoch: 0
-  description: "Provides PHP ${{vars.phpMM}} Microsoft Drivers for SQL Server (SQLSRV) - PECL"
+  epoch: 4
+  description: "Provides PHP ${{vars.phpMM}} Microsoft Drivers for SQL Server (SQLSRV)"
   copyright:
     - license: MIT
   dependencies:

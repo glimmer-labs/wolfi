@@ -1,8 +1,8 @@
 package:
-  name: php-8.3-zts-pecl-sqlsrv
+  name: php-8.3-zts-pdosqlsrv
   version: 5.12.0
   epoch: 4
-  description: "Provides PHP ${{vars.phpMM}} Microsoft Drivers for SQL Server (SQLSRV) - PECL"
+  description: "Provides PHP ${{vars.phpMM}} Microsoft Drivers for SQL Server (PDO_SQLSRV)"
   copyright:
     - license: MIT
   dependencies:
@@ -42,16 +42,16 @@ pipeline:
       cd source
       bash ./packagize.sh
 
-  - working-directory: source/sqlsrv
+  - working-directory: source/pdo_sqlsrv
     uses: pecl/phpize
 
-  - working-directory: source/sqlsrv
+  - working-directory: source/pdo_sqlsrv
     uses: autoconf/make
 
-  - working-directory: source/sqlsrv
+  - working-directory: source/pdo_sqlsrv
     uses: pecl/install
     with:
-      extension: "sqlsrv"
+      extension: "pdo_sqlsrv"
 
   - uses: strip
 
