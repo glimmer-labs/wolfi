@@ -131,7 +131,7 @@ jobs:
                   --merge \
                   --source \$arch/APKINDEX.tar.gz \
                   --output \$arch/APKINDEX.tar.gz \
-                  --signing-key /key/signing.rsa \
+                  --signing-key /key/glimmer-labs-signing.rsa \
                   \$arch/*.apk
             done
           EOF
