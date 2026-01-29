@@ -1,8 +1,8 @@
 package:
-  name: php-8.5-zts-pecl-mongodb
-  version: "2.1.4"
+  name: php-8.5-zts-mongodb
+  version: "2.1.7"
   epoch: 0
-  description: "PHP ${{vars.phpMM}} MongoDB driver - PECL"
+  description: "PHP ${{vars.phpMM}} MongoDB driver"
   copyright:
     - license: Apache-2.0
   dependencies:
@@ -35,10 +35,13 @@ environment:
       - zstd-dev
 
 pipeline:
-  - uses: fetch
+  - uses: git-checkout
     with:
-      uri: https://pecl.php.net/get/mongodb-${{package.version}}.tgz
-      expected-sha512: af5ede6c0c13a168cb741aee1d503e13e13b1ca925cda2a155d6b50a51d35cfe832f4b7d266617c6a65d82d4507be0b109bdd4cf92939715b23ba6248b238236
+      repository: https://github.com/mongodb/mongo-php-driver
+      tag: ${{package.version}}
+      expected-commit: 21d4f8b58fb4ade27d0ef919554cdd44b6ae1aab
+
+  - runs: git submodule update --init
 
   - name: phpize and configure
     runs: |
@@ -79,5 +82,5 @@ test:
 
 update:
   enabled: true
-  release-monitor:
-    identifier: 11158
+  github:
+    identifier: mongodb/mongo-php-driver
