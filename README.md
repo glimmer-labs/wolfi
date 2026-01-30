@@ -14,7 +14,7 @@ These packages are not part of the core Wolfi-OS distribution, our focus is to p
 ```dockerfile
 FROM cgr.dev/chainguard/wolfi-base
 
-RUN echo "https://wolfi.glimmerlabs.dev" >> /etc/apk/repositories && \
+RUN sed -i '1i @glimmerlabs https://wolfi.glimmerlabs.dev' /etc/apk/repositories && \
 cat <<EOF > /etc/apk/keys/glimmer-labs-signing.rsa.pub
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAujhU1omCi+9hmLm2bL0r
