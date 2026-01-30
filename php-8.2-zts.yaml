@@ -151,6 +151,7 @@ pipeline:
         --with-zip=shared \
         --enable-sysvsem=shared \
         --enable-sysvshm=shared \
+        --enable-phpdbg=shared \
         --with-external-pcre \
         --enable-shmop=shared \
         --enable-sysvmsg=shared \
