@@ -116,8 +116,8 @@ jobs:
 
       - name: Upload APKs
         run: |
-          rsync -avz --ignore-existing --partial x86_64/ ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }}:/apk/x86_64/
-          rsync -avz --ignore-existing --partial aarch64/ ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }}:/apk/aarch64/
+          rsync -avz --delay-updates --partial x86_64/ ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }}:/apk/x86_64/
+          rsync -avz --delay-updates --partial aarch64/ ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }}:/apk/aarch64/
 
       - name: Regenerate APK index
         run: |
