@@ -67,7 +67,7 @@ test:
   environment:
     contents:
       packages:
-        - frankenphp-8.3
+        - frankenphp-8.2
   pipeline:
     - name: Verify Version String
       runs: |
