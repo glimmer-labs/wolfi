@@ -3,12 +3,12 @@ name: Sync FrankenPHP With PHP ZTS
 on:
   pull_request:
     paths:
-      - "php-*-zts.yaml"
+      - "**/php-*-zts.yaml"
   push:
     branches:
       - main
     paths:
-      - "php-*-zts.yaml"
+      - "**/php-*-zts.yaml"
 
 permissions:
   contents: write

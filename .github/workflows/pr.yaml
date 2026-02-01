@@ -74,10 +74,10 @@ jobs:
           packageName=${packageName%.yaml}
 
           melange build \
-            -r https://packages.wolfi.dev/os \
-            -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
             -r https://wolfi.glimmerlabs.dev \
             -k https://wolfi.glimmerlabs.dev/glimmer-labs-signing.rsa.pub \
+            -r https://packages.wolfi.dev/os \
+            -k https://packages.wolfi.dev/os/wolfi-signing.rsa.pub \
             --arch x86_64 \
             --generate-index=false \
             --apk-cache-dir apk-cache \
