@@ -6,9 +6,9 @@ on:
     branches: 
       - main
     paths:
-      - '*.yaml'
+      - '**/*.yaml'
       - '!.yam.yaml'
-      - '!tests/*.yaml'
+      - '!.github/pipelines/**/*.yaml'
 
 permissions:
   contents: write
@@ -29,9 +29,10 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
+              - .github/pipelines/**/*.yaml
           files_yaml: |
             melange:
-              - ./*.yaml
+              - ./**/*.yaml
       
       - name: List all changed files
         run: echo '${{ steps.changes.outputs.melange_all_changed_files }}'
@@ -83,7 +84,7 @@ jobs:
             --signing-key glimmer-labs-signing.rsa \
             --git-repo-url=https://github.com/glimmer-labs/wolfi \
             --git-commit=${{ github.sha }} \
-            --pipeline-dir=./pipelines \
+            --pipeline-dir=./.github/pipelines \
             --source-dir=./${packageName} \
             ${{ matrix.package }}
 
