@@ -1,4 +1,4 @@
-# Wolfi-OS extra packages repository
+# Wolfi OS - community package repository
 
 This repository contains additional packages for [Wolfi-OS](https://wolfi.dev/), a Linux distribution focused on security, simplicity, and reproducibility.
 These packages are not part of the core Wolfi-OS distribution, our focus is to provide a community-driven APK repository alternative with focus on PHP at this time.
