@@ -30,7 +30,7 @@ jobs:
           matrix: true
           files_yaml: |
             melange:
-              - ./php-*-zts.yaml
+              - ./**/php-*-zts.yaml
 
       - name: List all changed files
         run: echo '${{ steps.changes.outputs.melange_all_changed_files }}'
