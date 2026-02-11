@@ -58,7 +58,7 @@ jobs:
           path="$PHP_FILE"
           [[ $path =~ /php-([0-9]+\.[0-9]+)-zts\.yaml$ ]] || { echo "Skip $path"; exit 0; }
           mm="${BASH_REMATCH[1]}"
-          target="frankenphp-${mm}.yaml"
+          target="frankenphp/frankenphp-${mm}.yaml"
           [[ -f "$target" ]] || { echo "Skip $path: $target missing"; exit 0; }
 
           old_version=$(git show "origin/${BASE_REF}:${path}" | yq -r '.package.version' 2>/dev/null || true)
