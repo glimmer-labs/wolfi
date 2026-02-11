@@ -1,9 +1,6 @@
 name: Sync FrankenPHP With PHP ZTS
 
 on:
-  pull_request:
-    paths:
-      - "**/php-*-zts.yaml"
   push:
     branches:
       - main
@@ -59,7 +56,7 @@ jobs:
           set -euo pipefail
 
           path="$PHP_FILE"
-          [[ $path =~ ^php-([0-9]+\.[0-9]+)-zts\.yaml$ ]] || { echo "Skip $path"; exit 0; }
+          [[ $path =~ /php-([0-9]+\.[0-9]+)-zts\.yaml$ ]] || { echo "Skip $path"; exit 0; }
           mm="${BASH_REMATCH[1]}"
           target="frankenphp-${mm}.yaml"
           [[ -f "$target" ]] || { echo "Skip $path: $target missing"; exit 0; }
