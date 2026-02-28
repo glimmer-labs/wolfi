@@ -46,10 +46,6 @@ jobs:
       bumped: ${{ steps.bump.outputs.bumped }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-          persist-credentials: false
 
       - uses: octo-sts/action@v1.1.1
         id: octo-sts
