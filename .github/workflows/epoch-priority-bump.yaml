@@ -1,0 +1,93 @@
+name: Epoch Priority Bump
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: write
+
+jobs:
+  bump-epoch-priority:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Look for changed files
+        id: changes
+        uses: tj-actions/changed-files@v47
+        with:
+          files_ignore_yaml: |
+            melange:
+              - .yam.yaml
+              - .github/pipelines/**/*.yaml
+              - .github/workflows/**/*.yaml
+          files_yaml: |
+            melange:
+              - ./**/*.yaml
+
+      - name: Replace epoch line in changed YAML files
+        id: replace
+        env:
+          CHANGED_FILES: ${{ steps.changes.outputs.melange_all_changed_files }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CHANGED_FILES}" ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          updated=false
+          processed_files=""
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+
+            if grep -qF 'epoch: 0 # Start epoch at 100 to have higher priority than wolfi/os' "$file"; then
+              sed -i 's/epoch: 0 # Start epoch at 100 to have higher priority than wolfi\/os/epoch: 100 # Start epoch at 100 to have higher priority than wolfi\/os/g' "$file"
+              updated=true
+              processed_files+="$file"$'\n'
+            fi
+          done <<< "$CHANGED_FILES"
+
+          if [ "$updated" = true ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "processed_files<<EOF"
+              printf '%s' "$processed_files"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push changes
+        if: steps.replace.outputs.has_changes == 'true'
+        env:
+          PROCESSED_FILES: ${{ steps.replace.outputs.processed_files }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+            git add -- "$file"
+          done <<< "$PROCESSED_FILES"
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: bump epoch priority to 100"
+          git push
