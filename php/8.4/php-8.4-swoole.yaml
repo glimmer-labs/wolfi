@@ -1,7 +1,7 @@
 package:
   name: php-8.4-swoole
-  version: "6.1.6"
-  epoch: 100 # Start epoch at 100 to have higher priority than wolfi/os
+  version: "6.2.0"
+  epoch: 0 # Start epoch at 100 to have higher priority than wolfi/os
   description: "Coroutine-based concurrency library for PHP"
   copyright:
     - license: Apache-2.0
@@ -33,7 +33,7 @@ pipeline:
     with:
       repository: https://github.com/swoole/swoole-src
       tag: "v${{package.version}}"
-      expected-commit: d611ff3ca60e8c9425b2e2e3ba1a9004faab64f5
+      expected-commit: 511a1e85d546e84cbf723737120021ee19dd69ca
 
   - name: Prepare build
     runs: phpize
