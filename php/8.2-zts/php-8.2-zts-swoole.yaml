@@ -24,6 +24,7 @@ environment:
       - brotli-dev
       - build-base
       - busybox
+      - openssl-dev
       - pcre2-dev
       - php-${{vars.phpMM}}-zts
       - php-${{vars.phpMM}}-zts-dev
