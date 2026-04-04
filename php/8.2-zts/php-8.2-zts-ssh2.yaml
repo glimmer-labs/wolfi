@@ -1,7 +1,7 @@
 package:
   name: php-8.2-zts-ssh2
-  version: 1.4.1
-  epoch: 2
+  version: "1.5.0"
+  epoch: 0
   description: "Bindings for the libssh2 library"
   copyright:
     - license: PHP-3.01
@@ -31,7 +31,7 @@ pipeline:
     with:
       repository: https://github.com/php/pecl-networking-ssh2
       tag: "${{package.version}}"
-      expected-commit: 65c0da1b18373e2286d1569a176101583225a2c0
+      expected-commit: 15f8c1d8540c5e98443e477bfc0926cba266ad7d
 
   - name: Prepare build
     runs: phpize
