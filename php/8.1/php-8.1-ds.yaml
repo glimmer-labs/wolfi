@@ -57,7 +57,7 @@ update:
   github:
     identifier: php-ds/ext-ds
     strip-prefix: v
-    tag-filter: v
+    tag-filter: v1
     use-tag: true
 
 test:
