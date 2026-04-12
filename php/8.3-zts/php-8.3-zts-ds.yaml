@@ -1,6 +1,6 @@
 package:
   name: php-8.3-zts-ds
-  version: "1.8.0"
+  version: "2.0.0"
   epoch: 0
   description: "An extension providing efficient data structures for PHP"
   copyright:
@@ -30,7 +30,7 @@ pipeline:
     with:
       repository: https://github.com/php-ds/ext-ds
       tag: "v${{package.version}}"
-      expected-commit: 2a019fcf201829b1d37a595910d208020fc21e8a
+      expected-commit: 533f11e1fc7e45e457e77d879f853bf5ec789f07
 
   - name: Prepare build
     runs: phpize
