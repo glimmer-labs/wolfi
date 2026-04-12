@@ -9,6 +9,7 @@ on:
       - '**/*.yaml'
       - '!.yam.yaml'
       - '!.github/pipelines/**/*.yaml'
+      - '!.github/workflows/**/*.yaml'
 
 permissions:
   contents: write
@@ -103,6 +104,9 @@ jobs:
 
   deploy:
     needs: build
+    concurrency:
+      group: cd-deploy
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow artifacts
@@ -111,34 +115,42 @@ jobs:
           path: .
           merge-multiple: true 
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.APK_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.APK_DEPLOY_HOST }} >> ~/.ssh/known_hosts
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
+        with:
+          rclone_config: |
+            [r2]
+            type = s3
+            provider = Cloudflare
+            env_auth = true
+            region = auto
+            endpoint = ${{ secrets.R2_ENDPOINT }}
+          disable_base64: true
 
-      - name: Upload APKs
-        run: |
-          rsync -avz --delay-updates --partial x86_64/ ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }}:/apk/x86_64/
-          rsync -avz --delay-updates --partial aarch64/ ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }}:/apk/aarch64/
+      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
 
-      - name: Regenerate APK index
-        run: |
-          ssh ${{ secrets.APK_DEPLOY_USER }}@${{ secrets.APK_DEPLOY_HOST }} << EOF
-            set -e
-            cd /apk
+      - name: Get signing key
+        run: echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa
 
-            for arch in x86_64 aarch64; do
-              sudo melange index \
-                  --arch \$arch \
-                  --merge \
-                  --source \$arch/APKINDEX.tar.gz \
-                  --output \$arch/APKINDEX.tar.gz \
-                  --signing-key /key/glimmer-labs-signing.rsa \
-                  \$arch/*.apk
-            done
-          EOF
+      - name: Upload to registry and regenerate APK index
+        env: 
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          for arch in x86_64 aarch64; do
+            rclone copy $arch/ r2:wolfi/$arch --header-upload "Cache-Control: public, max-age=31536000, immutable"
+            rclone copyto r2:wolfi/$arch/APKINDEX.tar.gz $arch/APKINDEX.tar.gz
+
+            melange index \
+              --arch $arch \
+              --merge \
+              --source $arch/APKINDEX.tar.gz \
+              --output $arch/APKINDEX.tar.gz \
+              --signing-key glimmer-labs-signing.rsa \
+              $arch/*.apk
+
+            rclone copyto $arch/APKINDEX.tar.gz r2:wolfi/$arch/APKINDEX.tar.gz --header-upload "Cache-Control: public, max-age=360"
+          done
 
       - name: Purge cache
         uses: jakejarvis/cloudflare-purge-action@master
