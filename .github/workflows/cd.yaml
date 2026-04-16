@@ -138,8 +138,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
           for arch in x86_64 aarch64; do
-            rclone copy $arch/ r2:wolfi/$arch --header-upload "Cache-Control: public, max-age=31536000, immutable"
-            rclone copyto r2:wolfi/$arch/APKINDEX.tar.gz $arch/APKINDEX.tar.gz
+            rclone copy $arch/ r2:wolfi/$arch --log-level INFO --header-upload "Cache-Control: public, max-age=31536000, immutable"
+            rclone copyto r2:wolfi/$arch/APKINDEX.tar.gz $arch/APKINDEX.tar.gz --log-level INFO
 
             melange index \
               --arch $arch \
@@ -149,7 +149,7 @@ jobs:
               --signing-key glimmer-labs-signing.rsa \
               $arch/*.apk
 
-            rclone copyto $arch/APKINDEX.tar.gz r2:wolfi/$arch/APKINDEX.tar.gz --header-upload "Cache-Control: public, max-age=360"
+            rclone copyto $arch/APKINDEX.tar.gz r2:wolfi/$arch/APKINDEX.tar.gz --log-level INFO --header-upload "Cache-Control: public, max-age=360"
           done
 
       - name: Purge cache
