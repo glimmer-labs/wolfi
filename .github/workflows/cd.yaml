@@ -141,6 +141,8 @@ jobs:
 
       - name: Turnstyle - waiting other deploys to finish
         uses: softprops/turnstyle@v3
+        with:
+          poll-interval-seconds: 10
 
       - name: Regenerate APK index
         env: 
