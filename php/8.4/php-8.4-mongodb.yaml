@@ -1,7 +1,7 @@
 package:
   name: php-8.4-mongodb
-  version: "2.3.0"
-  epoch: 100 # Start epoch at 100 to have higher priority than wolfi/os
+  version: "2.3.1"
+  epoch: 0 # Start epoch at 100 to have higher priority than wolfi/os
   description: "PHP ${{vars.phpMM}} MongoDB driver"
   copyright:
     - license: Apache-2.0
@@ -39,7 +39,7 @@ pipeline:
     with:
       repository: https://github.com/mongodb/mongo-php-driver
       tag: ${{package.version}}
-      expected-commit: 2d9d04633e2e43b3f27d5af287bbe38e0b10bcec
+      expected-commit: babf9605ef76ecc19cf92197e6c5f0e4cecc8c44
 
   - runs: git submodule update --init
 
