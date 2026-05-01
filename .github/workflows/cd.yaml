@@ -143,6 +143,8 @@ jobs:
         uses: softprops/turnstyle@v3
         with:
           poll-interval-seconds: 10
+          job-to-wait-for: "deploy"
+          step-to-wait-for: "Regenerate APK index"
 
       - name: Regenerate APK index
         env: 
