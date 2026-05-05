@@ -1,6 +1,6 @@
 package:
   name: php-8.3
-  version: "8.3.30"
+  version: "8.3.31"
   epoch: 100 # Start epoch at 100 to have higher priority than wolfi/os
   description: "the PHP programming language"
   copyright:
@@ -69,7 +69,7 @@ pipeline:
     with:
       repository: https://github.com/php/php-src
       tag: php-${{package.version}}
-      expected-commit: 3e4351abe31f294f2ba967b5bac8e4fd7549194b
+      expected-commit: 263400c69cdf04092142bb89cfbb36e94ac46db4
 
   # https://gitlab.alpinelinux.org/alpine/aports/-/blob/master/community/php83/install-pear.patch
   - uses: patch
