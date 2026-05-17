@@ -51,6 +51,7 @@ jobs:
       - name: Update FrankenPHP required PHP ZTS version
         env:
           BASE_REF: main
+          BASE_SHA: ${{ github.event.before }}
           PHP_FILE: ${{ matrix.phpfile }}
         run: |
           set -euo pipefail
@@ -61,7 +62,7 @@ jobs:
           target="frankenphp/frankenphp-${mm}.yaml"
           [[ -f "$target" ]] || { echo "Skip $path: $target missing"; exit 0; }
 
-          old_version=$(git show "origin/${BASE_REF}:${path}" | yq -r '.package.version' 2>/dev/null || true)
+          old_version=$(git show "${BASE_SHA}:${path}" | yq -r '.package.version' 2>/dev/null || true)
           new_version=$(yq -r '.package.version' "$path")
           old_version=${old_version%\"}; old_version=${old_version#\"}
           new_version=${new_version%\"}; new_version=${new_version#\"}
