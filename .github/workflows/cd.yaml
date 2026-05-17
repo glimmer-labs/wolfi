@@ -31,7 +31,7 @@ jobs:
           files_ignore_yaml: |
             melange:
               - .yam.yaml
-              - .github/pipelines/**/*.yaml
+              - .github/**/*.yaml
           files_yaml: |
             melange:
               - ./**/*.yaml
