@@ -1,0 +1,53 @@
+name: Config Package Check
+
+description: |
+  Validates that a configuration package contains non-empty configuration
+  files in the expected location. Configuration packages install runtime
+  configuration under /etc/ or a specified directory. Uses the 'file'
+  command to verify that config files are text-based rather than binary
+  blobs, catching accidental packaging of compiled objects or archives
+  as configuration files.
+
+needs:
+  packages:
+    - file
+
+inputs:
+  dir:
+    description: |
+      Directory to check for config files. Defaults to etc/.
+      Override if config files are installed elsewhere
+      (e.g., usr/share/myapp/ or terraform/).
+    default: "etc/"
+  package:
+    description: Package to check for config files.
+    default: ${{context.name}}
+
+pipeline:
+  - name: Check that config package contains non-empty config files
+    runs: |
+      pkg="${{inputs.package}}"
+      dir="${{inputs.dir}}"
+
+      # Remove starting '/' from path if used
+      # This provides compat with packages that
+      # currently override the dir
+      if [[ "${dir:0:1}" == "/" ]]; then
+        dir="${dir:1}"
+      fi
+
+      tmpd=$(mktemp -d)
+      trap "rm -Rf '${tmpd}'" EXIT
+      file_list="${tmpd}/files"
+
+      apk info --quiet -L "$pkg" > "$file_list" || {
+        echo "failed to list contents of $pkg"
+        exit 1
+      }
+
+      config_files="$(grep ^$dir $file_list)"
+      if [ -z "$config_files" ]; then
+        echo "$pkg does not contain config files in $dir!"
+        exit 1
+      fi
+      echo -e "Config files found:\n$config_files"

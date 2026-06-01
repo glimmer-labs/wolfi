@@ -1,0 +1,99 @@
+name: Start k3s cluster and run post commands
+
+description: |
+  Starts a single-node k3s cluster inside the melange QEMU test VM,
+  waits for the node to be Ready, then runs optional post commands.
+
+  The melange QEMU VM has a shared rootfs parent mount that prevents
+  runc pivot_root from working. This pipeline drops a tiny containerd
+  config override with NoPivotRoot=true to work around the issue.
+
+  Usage:
+    - uses: test/k3s
+      with:
+        post: |
+          kubectl run nginx --image=cgr.dev/chainguard/nginx:latest --port=8080
+          kubectl wait --for=condition=Ready pod/nginx --timeout=60s
+
+needs:
+  packages:
+    - busybox
+    - k3s
+    - iptables
+
+inputs:
+  post:
+    description: Commands to run after k3s is ready. KUBECONFIG is already set.
+    required: false
+
+pipeline:
+  - name: "start k3s"
+    runs: |
+      set -ex
+
+      # Separate mount for containerd/k3s state
+      mkdir -p /var/lib/rancher
+      mount -t tmpfs tmpfs /var/lib/rancher
+
+      # Override only the runc options to set NoPivotRoot=true. k3s's
+      # default containerd config template imports anything matching
+      # config-v3.toml.d/*.toml, so we don't need to ship a full
+      # template (which would drift on k3s upgrades).
+      mkdir -p /var/lib/rancher/k3s/agent/etc/containerd/config-v3.toml.d
+      cat > /var/lib/rancher/k3s/agent/etc/containerd/config-v3.toml.d/no-pivot-root.toml << "TOML"
+      [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options]
+      NoPivotRoot = true
+      TOML
+
+      # Start k3s — redirect all fds and detach fully
+      k3s server \
+        --disable=traefik \
+        --disable=metrics-server \
+        --disable-network-policy \
+        > /var/log/k3s.log 2>&1 </dev/null &
+      K3S_PID=$!
+
+      export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+      # Cluster readiness chain. Each --for=condition wait is preceded
+      # by a --for=create on the same resource type — kubelet node
+      # registration and the SA / kube-system pod controllers are
+      # independent, so either may not exist when we start waiting and
+      # --for=condition --all errors out with "no matching resources
+      # found" against an empty collection.
+      kubectl wait --for=create node --all --timeout=5m
+      kubectl wait --for=condition=Ready node --all --timeout=5m
+      kubectl wait --for=create sa/default -n default --timeout=5m
+      kubectl wait --for=create pods --all -n kube-system --timeout=5m
+      kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=5m || {
+        echo "ERROR: kube-system pods did not become Ready"
+        kubectl get pods -A -o wide
+        cat /var/log/k3s.log
+        exit 1
+      }
+
+      # Run post commands from a temp script so a non-final failing
+      # command propagates via -e instead of being overwritten by the
+      # next command's exit status.
+      TMPD=$(mktemp -d)
+      POST_INPUT="${TMPD}/post_input"
+      POST_F="${TMPD}/post"
+      cat > "$POST_INPUT" <<'MELANGE_POST_EOF'
+      ${{inputs.post}}
+      MELANGE_POST_EOF
+      post=$(cat "$POST_INPUT")
+      rc=0
+      if [ -n "$post" ]; then
+        shbang="#!"
+        if [ "${post#${shbang}}" = "$post" ]; then
+          printf "%s\n" '#!/bin/sh -ex' > "$POST_F"
+        fi
+        printf "%s\n" "$post" >> "$POST_F"
+        chmod 755 "$POST_F"
+        "$POST_F" || rc=$?
+      fi
+
+      # Clean up k3s
+      kill $K3S_PID 2>/dev/null || true
+      wait $K3S_PID 2>/dev/null || true
+      exit $rc
