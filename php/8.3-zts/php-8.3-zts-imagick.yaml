@@ -55,6 +55,9 @@ subpackages:
       - runs: |
           mkdir -p "${{targets.subpkgdir}}/etc/php/conf.d"
           echo "extension=imagick.so" > "${{targets.subpkgdir}}/etc/php/conf.d/imagick.ini"
+    test:
+      pipeline:
+        - uses: test/tw/configpackage
 
 update:
   enabled: true
