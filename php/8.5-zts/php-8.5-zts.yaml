@@ -1,6 +1,6 @@
 package:
   name: php-8.5-zts
-  version: "8.5.6"
+  version: "8.5.7"
   epoch: 0
   description: "the PHP programming language with Zend Thread Safety (ZTS) enabled"
   copyright:
@@ -67,7 +67,7 @@ pipeline:
     with:
       repository: https://github.com/php/php-src
       tag: php-${{package.version}}
-      expected-commit: b208d6046a61da2f2dfdd45883ce02d5299d1b22
+      expected-commit: c9d7d98d09567bba38c6e73cea636854e6fe8632
 
   # https://gitlab.alpinelinux.org/alpine/aports/-/blob/master/community/php85/install-pear.patch
   - uses: patch
