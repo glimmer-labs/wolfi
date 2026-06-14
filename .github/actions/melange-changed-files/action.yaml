@@ -1,0 +1,27 @@
+name: 'Get melange packages changed files'
+description: 'Gets the list of changed files for melange packages'
+
+outputs:
+  melange_changed_files:
+    description: 'List of changed files for melange packages'
+    value: ${{ steps.changes.outputs.melange_all_changed_files }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Look for changed files
+      id: changes
+      uses: tj-actions/changed-files@v47
+      with:
+        matrix: true
+        files_ignore_yaml: |
+          melange:
+            - .yam.yaml
+            - .github/**/*.yaml
+        files_yaml: |
+          melange:
+            - ./**/*.yaml
+
+    - name: List all changed files
+      shell: bash
+      run: echo '${{ steps.changes.outputs.melange_all_changed_files }}'

@@ -19,25 +19,12 @@ jobs:
   changed-files:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.changes.outputs.melange_all_changed_files }}
+      matrix: ${{ steps.changes.outputs.melange_changed_files }}
     steps:
       - uses: actions/checkout@v6
 
-      - name: Look for changed files
-        id: changes
-        uses: tj-actions/changed-files@v47
-        with:
-          matrix: true
-          files_ignore_yaml: |
-            melange:
-              - .yam.yaml
-              - .github/pipelines/**/*.yaml
-          files_yaml: |
-            melange:
-              - ./**/*.yaml
-      
-      - name: List all changed files
-        run: echo '${{ steps.changes.outputs.melange_all_changed_files }}'
+      - id: changes
+        uses: glimmer-labs/wolfi/.github/actions/melange-changed-files@main
 
   bump-epoch-priority:
     runs-on: ubuntu-latest
