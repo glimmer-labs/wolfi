@@ -1,6 +1,6 @@
 package:
   name: php-8.1-zts-swoole
-  version: "6.1.8"
+  version: "6.1.9"
   epoch: 0
   description: "Coroutine-based concurrency library for PHP"
   copyright:
@@ -33,7 +33,7 @@ pipeline:
     with:
       repository: https://github.com/swoole/swoole-src
       tag: "v${{package.version}}"
-      expected-commit: bfcccc22693cd1cda68df2c11a0fe4f823fff8f0
+      expected-commit: 734803211e857f5527fe7d6f248ee01185458530
 
   - name: Prepare build
     runs: phpize
