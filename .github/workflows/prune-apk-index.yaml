@@ -1,4 +1,4 @@
-name: Prune Old Wolfi APK Packages
+name: Prune Wolfi APK Index
 
 on:
   workflow_dispatch: null
@@ -57,36 +57,30 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p apk_files plan
+          mkdir -p ${{ matrix.arch }}
 
-          rclone copyto "r2:wolfi/${{ matrix.arch }}/APKINDEX.tar.gz" "apk_files/APKINDEX.tar.gz" --log-level INFO
+          rclone copyto "r2:wolfi/${{ matrix.arch }}/APKINDEX.tar.gz" "${{ matrix.arch }}/APKINDEX.tar.gz" --log-level INFO
 
           python .github/scripts/prune_apk_repo.py \
-              --index "apk_files/APKINDEX.tar.gz" \
-              --output-dir "plan" \
+              --index "${{ matrix.arch }}/APKINDEX.tar.gz" \
+              --output-dir "." \
               --keep-days "$RETENTION_DAYS" \
               --arch "${{ matrix.arch }}"
 
-          if [[ ! -s "plan/delete.txt" ]]; then
+          if [[ ! -s "./delete.txt" ]]; then
             echo "${{ matrix.arch }}: no packages eligible for deletion"
             exit 0
           fi
 
-          echo "downloading remaining packages"
-          rclone copy "r2:wolfi/${{ matrix.arch }}" "apk_files" \
-              --include '*.apk' \
-              --exclude-from "plan/delete.txt" \
-              --log-level INFO
+          echo "uploading delete.txt to registry for next month deletion"
+          time="$(date +'%Y-%m-%s')"
+          rclone copyto "./delete.txt" "r2:wolfi/package-removal/${{ matrix.arch }}-${time}.txt" --log-level INFO
 
-          echo "regenerating APKINDEX locally"
-          melange index \
-              --arch "${{ matrix.arch }}" \
-              --output "apk_files/APKINDEX.tar.gz" \
-              --signing-key glimmer-labs-signing.rsa \
-              apk_files/*.apk
+          echo "signing refreshed APKINDEX"
+          melange sign-index ${{ matrix.arch }}/APKINDEX.tar.gz --signing-key glimmer-labs-signing.rsa
 
-          echo "uploading refreshed APKINDEX.tar.gz"
-          rclone copyto "apk_files/APKINDEX.tar.gz" "r2:wolfi/${{ matrix.arch }}/APKINDEX.tar.gz" \
+          echo "uploading refreshed APKINDEX"
+          rclone copyto "${{ matrix.arch }}/APKINDEX.tar.gz" "r2:wolfi/${{ matrix.arch }}/APKINDEX.tar.gz" \
               --log-level INFO \
               --header-upload 'Cache-Control: public, max-age=360'
 
@@ -96,36 +90,27 @@ jobs:
           CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
           CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
           PURGE_URLS: '["https://wolfi.glimmerlabs.dev/${{ matrix.arch }}/APKINDEX.tar.gz"]'
-
-      - name: Delete stale packages
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: |
-          set -euo pipefail
-
-          while IFS= read -r apk_file; do
-            [[ -z "$apk_file" ]] && continue
-            rclone deletefile "r2:wolfi/${{ matrix.arch }}/${apk_file}" --log-level INFO
-          done < "plan/delete.txt"
           
       - name: Add GitHub Action summary
         run: |
           month="$(date +'%B')"
           year="$(date +'%Y')"
+          deletion_date="$(date -d "$(date +%Y-%m-01) +1 month" +'%B %-d, %Y')"
 
           {
-            echo "# Glimmer Labs Package Removal - ${month} ${year}"
+            echo "# Glimmer Labs Package Removal List - ${month} ${year}"
             echo
-            echo "The following packages have been removed because they are no longer the latest version and have been superseded for more than **6 months**."
+            echo "The following packages have been removed from the package index because newer versions have been available for more than **6 months**."
             echo
-            echo "This cleanup is performed automatically on the **first day of every month**."
+            echo "This cleanup is performed automatically each month."
+            echo
+            echo "Although these packages are no longer listed in the index, they will remain available for download from the registry until **${deletion_date}**."
             echo
             echo "<details>"
-            echo "<summary><strong>Removed packages ($(wc -l < plan/delete.txt))</strong></summary>"
+            echo "<summary><strong>Removed packages ($(wc -l < ./delete.txt))</strong></summary>"
             echo
             echo '```text'
-            cat plan/delete.txt
+            cat ./delete.txt
             echo '```'
             echo
             echo "</details>"
