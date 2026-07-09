@@ -1,0 +1,101 @@
+name: Delete Old Wolfi APK Packages
+
+on:
+  workflow_dispatch: null
+  schedule:
+    - cron: 0 0 1 * *
+
+permissions:
+    contents: read
+
+concurrency:
+  group: apk-delete
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    if: github.repository == 'glimmer-labs/wolfi'
+    strategy:
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
+        with:
+          rclone_config: |
+            [r2]
+            type = s3
+            provider = Cloudflare
+            env_auth = true
+            region = auto
+            endpoint = ${{ secrets.R2_ENDPOINT }}
+          disable_base64: true
+
+      - name: Check and download previous month deletion plan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+            set -euo pipefail
+
+            prev_month="$(date -d 'last month' +'%Y-%m')"
+
+            rclone lsf "r2:wolfi/package-removal/" --include "${{ matrix.arch }}-${prev_month}-*.txt" > plans.txt || true
+
+            if [[ ! -s plans.txt ]]; then
+              echo "No deletion plans found"
+              exit 0
+            fi
+  
+            while IFS= read -r plan; do
+              [[ -z "$plan" ]] && continue
+  
+              echo "Downloading ${plan}"
+              rclone copyto "r2:wolfi/package-removal/${plan}" "delete-plans/${plan}" --log-level INFO
+            done < plans.txt
+  
+            cat delete-plans/*.txt > delete.txt
+  
+            sort -u delete.txt -o delete.txt
+  
+            echo "Total packages to delete: $(wc -l < delete.txt)"
+
+      - name: Delete planned packages
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+            set -euo pipefail
+
+            if [[ ! -f delete.txt ]]; then
+            echo "No packages to delete"
+            exit 0
+            fi
+
+            rclone delete "r2:wolfi/${{ matrix.arch }}" --files-from delete.txt --ignore-errors --log-level INFO
+
+      - name: Add GitHub Action summary
+        run: |
+            prev_month="$(date -d 'last month' +'%B')"
+            prev_year="$(date -d 'last month' +'%Y')"
+    
+            {
+            echo "# Glimmer Labs Deleted Packages - ${prev_month} ${prev_year}"
+            echo
+    
+            if [[ -f ./delete.txt ]]; then
+                echo "<details>"
+                echo "<summary><strong>Deleted packages ($(wc -l < ./delete.txt))</strong></summary>"
+                echo
+                echo '```text'
+                cat ./delete.txt
+                echo '```'
+                echo
+                echo "</details>"
+            else
+                echo "No packages to delete."
+            fi
+            } >> "$GITHUB_STEP_SUMMARY"
