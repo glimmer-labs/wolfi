@@ -95,6 +95,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    concurrency:
+      group: apk-index
+      cancel-in-progress: false
+      queue: max
     steps:
       - name: Download all workflow artifacts
         uses: actions/download-artifact@v7
@@ -127,13 +131,6 @@ jobs:
           for arch in x86_64 aarch64; do
             rclone copy $arch/ r2:wolfi/$arch --log-level INFO --header-upload "Cache-Control: public, max-age=31536000, immutable"
           done
-
-      - name: Turnstyle - waiting other deploys to finish
-        uses: softprops/turnstyle@v3
-        with:
-          poll-interval-seconds: 10
-          job-to-wait-for: "deploy"
-          step-to-wait-for: "Regenerate APK index"
 
       - name: Regenerate APK index
         env: 
