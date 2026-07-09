@@ -116,6 +116,7 @@ jobs:
             env_auth = true
             region = auto
             endpoint = ${{ secrets.R2_ENDPOINT }}
+            no_check_bucket = true
           disable_base64: true
 
       - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
