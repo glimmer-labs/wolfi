@@ -1,0 +1,28 @@
+name: 'Set apk docker action'
+description: 'Sets up apk command using Docker'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Docker availability
+      shell: bash
+      run: |
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "Docker is required but not available in PATH" >&2
+          exit 1
+        fi
+
+    - name: Pull melange image
+      shell: bash
+      run: |
+        docker pull alpine:latest
+
+    - name: Create apk script
+      shell: bash
+      run: |
+        cat <<'EOF' >/usr/local/bin/apk
+        #!/usr/bin/env bash
+        set -euo pipefail
+        docker run --privileged --rm -i --user "$(id -u):$(id -g)" -v "${PWD}":/work -w /work alpine apk "$@"
+        EOF
+        chmod +x /usr/local/bin/apk
