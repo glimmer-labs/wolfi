@@ -1,0 +1,132 @@
+name: Prune Old Wolfi APK Packages
+
+on:
+  workflow_dispatch: null
+  schedule:
+    - cron: 0 3 1 * *
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apk-index
+  cancel-in-progress: false
+  queue: max
+
+env:
+  RETENTION_DAYS: "180"
+
+jobs:
+  prune:
+    if: github.repository == 'glimmer-labs/wolfi'
+    strategy:
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
+        with:
+          rclone_config: |
+            [r2]
+            type = s3
+            provider = Cloudflare
+            env_auth = true
+            region = auto
+            endpoint = ${{ secrets.R2_ENDPOINT }}
+          disable_base64: true
+
+      - uses: glimmer-labs/wolfi/.github/actions/setup-melange@main
+
+      - name: Get signing key
+        run: echo "${{ secrets.SIGNING_KEY }}" > glimmer-labs-signing.rsa
+
+      - uses: actions/setup-python@v6
+
+      - name: Install packaging module
+        run: pip install packaging
+
+      - name: Prune stale APKs
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p apk_files plan
+
+          rclone copyto "r2:wolfi/${{ matrix.arch }}/APKINDEX.tar.gz" "apk_files/APKINDEX.tar.gz" --log-level INFO
+
+          python .github/scripts/prune_apk_repo.py \
+              --index "apk_files/APKINDEX.tar.gz" \
+              --output-dir "plan" \
+              --keep-days "$RETENTION_DAYS" \
+              --arch "${{ matrix.arch }}"
+
+          if [[ ! -s "plan/delete.txt" ]]; then
+            echo "${{ matrix.arch }}: no packages eligible for deletion"
+            exit 0
+          fi
+
+          echo "downloading remaining packages"
+          rclone copy "r2:wolfi/${{ matrix.arch }}" "apk_files" \
+              --include '*.apk' \
+              --exclude-from "plan/delete.txt" \
+              --log-level INFO
+
+          echo "regenerating APKINDEX locally"
+          melange index \
+              --arch "${{ matrix.arch }}" \
+              --output "apk_files/APKINDEX.tar.gz" \
+              --signing-key glimmer-labs-signing.rsa \
+              apk_files/*.apk
+
+          echo "uploading refreshed APKINDEX.tar.gz"
+          rclone copyto "apk_files/APKINDEX.tar.gz" "r2:wolfi/${{ matrix.arch }}/APKINDEX.tar.gz" \
+              --log-level INFO \
+              --header-upload 'Cache-Control: public, max-age=360'
+
+      - name: Purge cache
+        uses: jakejarvis/cloudflare-purge-action@master
+        env:
+          CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+          PURGE_URLS: '["https://wolfi.glimmerlabs.dev/${{ matrix.arch }}/APKINDEX.tar.gz"]'
+
+      - name: Delete stale packages
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r apk_file; do
+            [[ -z "$apk_file" ]] && continue
+            rclone deletefile "r2:wolfi/${{ matrix.arch }}/${apk_file}" --log-level INFO
+          done < "plan/delete.txt"
+          
+      - name: Add GitHub Action summary
+        run: |
+          month="$(date +'%B')"
+          year="$(date +'%Y')"
+
+          {
+            echo "# Glimmer Labs Package Removal - ${month} ${year}"
+            echo
+            echo "The following packages have been removed because they are no longer the latest version and have been superseded for more than **6 months**."
+            echo
+            echo "This cleanup is performed automatically on the **first day of every month**."
+            echo
+            echo "<details>"
+            echo "<summary><strong>Removed packages ($(wc -l < plan/delete.txt))</strong></summary>"
+            echo
+            echo '```text'
+            cat plan/delete.txt
+            echo '```'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
