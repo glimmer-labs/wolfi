@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
+import subprocess
 import sys
 import tarfile
 from dataclasses import dataclass
@@ -18,10 +20,11 @@ class PackageRecord:
     version: str
     timestamp: int
     filename: str
+    raw_block: str
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Plan APK repository garbage collection from APKINDEX.tar.gz")
+    parser = argparse.ArgumentParser(description="Plan and execute APK repository garbage collection from APKINDEX.tar.gz")
     parser.add_argument("--index", required=True, type=Path, help="Path to APKINDEX.tar.gz")
     parser.add_argument("--output-dir", required=True, type=Path, help="Directory for plan files")
     parser.add_argument("--keep-days", type=int, default=180, help="Keep packages newer than this many days")
@@ -46,23 +49,24 @@ def read_index(index_path: Path) -> list[PackageRecord]:
         content = handle.read().decode("utf-8")
 
     records: list[PackageRecord] = []
-    current: dict[str, str] = {}
-    for raw_line in content.splitlines():
-        line = raw_line.strip()
-        if not line:
-            if current:
-                records.append(record_from_fields(current, index_path))
-                current = {}
+    
+    blocks = content.split("\n\n")
+    for block in blocks:
+        if not block.strip():
             continue
-
-        if ":" not in line:
-            raise RuntimeError(f"malformed APKINDEX line: {raw_line!r}")
-
-        field, value = line.split(":", 1)
-        current[field] = value.lstrip()
-
-    if current:
-        records.append(record_from_fields(current, index_path))
+            
+        current: dict[str, str] = {}
+        for raw_line in block.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if ":" not in line:
+                raise RuntimeError(f"malformed APKINDEX line: {raw_line!r}")
+            field, value = line.split(":", 1)
+            current[field] = value.lstrip()
+            
+        if current:
+            records.append(record_from_fields(current, index_path, block))
 
     if not records:
         raise RuntimeError(f"no package entries found in {index_path}")
@@ -70,7 +74,7 @@ def read_index(index_path: Path) -> list[PackageRecord]:
     return records
 
 
-def record_from_fields(fields: dict[str, str], index_path: Path) -> PackageRecord:
+def record_from_fields(fields: dict[str, str], index_path: Path, raw_block: str) -> PackageRecord:
     missing = [field for field in ("P", "V", "t") if field not in fields]
     if missing:
         raise RuntimeError(f"{index_path}: missing APKINDEX fields {', '.join(missing)} in entry {fields!r}")
@@ -84,7 +88,7 @@ def record_from_fields(fields: dict[str, str], index_path: Path) -> PackageRecor
         raise RuntimeError(f"{index_path}: invalid timestamp for {name}-{version}: {fields['t']!r}") from exc
 
     filename = f"{name}-{version}.apk"
-    return PackageRecord(name=name, version=version, timestamp=timestamp, filename=filename)
+    return PackageRecord(name=name, version=version, timestamp=timestamp, filename=filename, raw_block=raw_block)
 
 
 def apk_version_compare(left: str, right: str) -> int:
@@ -158,11 +162,27 @@ def write_plan(output_dir: Path, arch: str, records: list[PackageRecord], keep: 
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def write_purged_index(index_path: Path, keep_records: list[PackageRecord]) -> None:
+    """Reassembles the filtered blocks into a new compressed archive without signature"""
+    new_content = "\n\n".join(record.raw_block for record in keep_records) + "\n\n"
+    
+    with tarfile.open(index_path, mode="w:gz") as tar:
+        tarinfo = tarfile.TarInfo(name="APKINDEX")
+        tarinfo.size = len(new_content)
+        tar.addfile(tarinfo, io.BytesIO(new_content.encode("utf-8")))
+
+
 def main() -> int:
     args = parse_args()
     records = read_index(args.index)
     keep, delete = build_plan(records, args.keep_days, args.now)
     write_plan(args.output_dir, args.arch, records, keep, delete)
+
+    if delete:
+        print(f"Modifying {args.index} to purge metadata for {len(delete)} entries...")
+        write_purged_index(args.index, keep)
+    else:
+        print("No index pruning required. Database is fully up to date.")
 
     now_ts = args.now if args.now is not None else int(datetime.now(timezone.utc).timestamp())
     cutoff_dt = datetime.fromtimestamp(now_ts - int(timedelta(days=args.keep_days).total_seconds()), tz=timezone.utc)
