@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   changed-files:
+    if: github.repository == 'glimmer-labs/wolfi'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.changes.outputs.melange_changed_files }}
