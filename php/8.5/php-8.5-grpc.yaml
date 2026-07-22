@@ -1,7 +1,7 @@
 package:
   name: php-8.5-grpc
-  version: "1.82.1"
-  epoch: 100 # Start epoch at 100 to have higher priority than wolfi/os
+  version: "1.83.0"
+  epoch: 0 # Start epoch at 100 to have higher priority than wolfi/os
   description: "A PHP extension for gRPC"
   copyright:
     - license: Apache-2.0
@@ -32,7 +32,7 @@ pipeline:
     with:
       repository: https://github.com/grpc/grpc
       tag: "v${{package.version}}"
-      expected-commit: acccf84c0df20487d64101f528e5d426541ca4e5
+      expected-commit: c876f4da50f7da2f331888b88b2a7243514139fe
 
   - name: Prepare build
     runs: cd src/php/ext/grpc && phpize
