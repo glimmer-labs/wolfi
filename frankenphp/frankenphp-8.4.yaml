@@ -1,6 +1,6 @@
 package:
   name: frankenphp-8.4
-  version: "1.12.6"
+  version: "1.12.7"
   epoch: 0
   description: "The Modern PHP App Server, written in Go"
   copyright:
@@ -36,7 +36,7 @@ pipeline:
     with:
       repository: https://github.com/php/frankenphp
       tag: "v${{package.version}}"
-      expected-commit: 75ecf697d6c29c1979f009713505f61a00d77632
+      expected-commit: 1362d0d6aab1291d7c90b4663916fa7d93685bac
 
   - name: Prepare Caddyfile
     runs: |
