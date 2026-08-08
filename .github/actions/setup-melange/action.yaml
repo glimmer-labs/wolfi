@@ -12,6 +12,14 @@ runs:
           exit 1
         fi
 
+    - name: Enable unprivileged user namespaces on the runner host
+      shell: bash
+      run: |
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0 || true
+        echo "unprivileged_userns_clone=$(cat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null || echo n/a)"
+        echo "max_user_namespaces=$(cat /proc/sys/user/max_user_namespaces 2>/dev/null || echo n/a)"
+
     - name: Pull melange image
       shell: bash
       run: |
