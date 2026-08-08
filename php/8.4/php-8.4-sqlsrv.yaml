@@ -1,6 +1,6 @@
 package:
   name: php-8.4-sqlsrv
-  version: "5.13.1"
+  version: "5.13.3"
   epoch: 100 # Start epoch at 100 to have higher priority than wolfi/os
   description: "Provides PHP ${{vars.phpMM}} Microsoft Drivers for SQL Server (SQLSRV)"
   copyright:
@@ -36,7 +36,7 @@ pipeline:
     with:
       repository: https://github.com/microsoft/msphpsql
       tag: "v${{package.version}}"
-      expected-commit: bc7aafb6e06a25b9d82dfecfe3ebec8b07df8e19
+      expected-commit: 7f7ba3a52650f0b2f64662f1f169a46f3134679c
 
   - runs: |
       cd source
