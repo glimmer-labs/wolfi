@@ -1,6 +1,6 @@
 package:
   name: frankenphp-8.5
-  version: "1.12.4"
+  version: "1.12.7"
   epoch: 1
   description: "The Modern PHP App Server, written in Go"
   copyright:
@@ -10,8 +10,8 @@ package:
       - frankenphp=${{package.full-version}}
     runtime:
       - libwatcher-c
-      - php-8.5-zts-dev=~8.5.8
-      - php-8.5-zts=~8.5.8
+      - php-8.5-zts-dev=~8.5.9
+      - php-8.5-zts=~8.5.9
 
 environment:
   contents:
@@ -25,8 +25,8 @@ environment:
       - libwatcher-c-dev
       - libxml2-dev
       - pcre2-dev
-      - php-8.5-zts-dev=~8.5.8
-      - php-8.5-zts=~8.5.8
+      - php-8.5-zts-dev=~8.5.9
+      - php-8.5-zts=~8.5.9
       - readline-dev
       - sqlite-dev
       - xcaddy
@@ -36,7 +36,7 @@ pipeline:
     with:
       repository: https://github.com/php/frankenphp
       tag: "v${{package.version}}"
-      expected-commit: 6dad73874f1bdf401da6d02c47adf5535a73e7c8
+      expected-commit: 1362d0d6aab1291d7c90b4663916fa7d93685bac
 
   - name: Prepare Caddyfile
     runs: |
