@@ -1,6 +1,6 @@
 package:
   name: php-8.1-zts-protobuf
-  version: "5.35.1"
+  version: "5.36.0"
   epoch: 0
   description: "Protocol Buffers - Google's data interchange format"
   copyright:
@@ -31,7 +31,7 @@ pipeline:
   - uses: fetch
     with:
       uri: https://pecl.php.net/get/protobuf-${{package.version}}.tgz
-      expected-sha512: cec03a21e5c1c295e6040b7bd616a62fb6027330a5ddf7b8cf9d3fc5072ff46dd803657d03cda063c26def3ec84c94086823e218f637632bd87045a28fd5e80c
+      expected-sha512: 4d10ca1e3f68537c1739032e99df86548ae33e9ef197a759863f6ab72e038d678e0690062112cbe808d642cbe22614e3c50ee6b18f3574f97b70d5d821789b4c
 
   - name: Prepare build
     runs: phpize
