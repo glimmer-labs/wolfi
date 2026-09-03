@@ -1,6 +1,6 @@
 package:
   name: php-8.3-zts-mongodb
-  version: "2.5.0"
+  version: "2.5.2"
   epoch: 0
   description: "PHP ${{vars.phpMM}} MongoDB driver"
   copyright:
@@ -39,7 +39,7 @@ pipeline:
     with:
       repository: https://github.com/mongodb/mongo-php-driver
       tag: ${{package.version}}
-      expected-commit: 266537459b41d0037564b52bd91004964583d8ee
+      expected-commit: 3b4f77d9cc60dc9ebd5ada11fbd940f77cc068e1
 
   - runs: git submodule update --init
 
