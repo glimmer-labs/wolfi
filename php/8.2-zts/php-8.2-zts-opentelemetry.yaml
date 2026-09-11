@@ -1,6 +1,6 @@
 package:
   name: php-8.2-zts-opentelemetry
-  version: "1.3.1"
+  version: "1.4.1"
   epoch: 0
   description: "OpenTelemetry PHP auto-instrumentation extension"
   copyright:
@@ -30,7 +30,7 @@ pipeline:
     with:
       repository: https://github.com/open-telemetry/opentelemetry-php-instrumentation
       tag: ${{package.version}}
-      expected-commit: 31f3731bf77e8814048610f90cb42003ef6c172d
+      expected-commit: 334a18705b250c4cfb94b7213192f2fc1c1a0ccf
 
   - name: Prepare build
     runs: cd ext && phpize
