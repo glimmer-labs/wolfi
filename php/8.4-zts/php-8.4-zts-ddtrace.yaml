@@ -7,8 +7,8 @@ package:
     - license: Apache-2.0 OR BSD-3-Clause
   dependencies:
     runtime:
-      - ${{package.name}}-config
-      - ${{package.name}}-src
+      - ${{package.name}}-zts-config
+      - ${{package.name}}-zts-src
       - php-${{vars.phpMM}}-zts
 
 vars:
