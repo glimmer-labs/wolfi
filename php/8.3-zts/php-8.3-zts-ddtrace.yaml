@@ -202,6 +202,12 @@ subpackages:
 
   - name: ${{package.name}}-profiling-config
     pipeline:
+      - runs: |
+          mkdir -p "${{targets.subpkgdir}}/etc/php/conf.d"
+          echo "extension=datadog-profiling.so" > "${{targets.subpkgdir}}/etc/php/conf.d/datadog-profiling.ini"
+    test:
+      pipeline:
+        - uses: test/tw/configpackage
 
 test:
   environment:
