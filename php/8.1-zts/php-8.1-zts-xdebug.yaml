@@ -1,6 +1,6 @@
 package:
   name: php-8.1-zts-xdebug
-  version: "3.5.0"
+  version: "3.5.3"
   epoch: 0
   description: "Step Debugger for PHP"
   copyright:
@@ -30,7 +30,7 @@ pipeline:
     with:
       repository: https://github.com/xdebug/xdebug
       tag: "${{package.version}}"
-      expected-commit: 32dcc3da7bbff171f67e803f28ef4c098f8e2caf
+      expected-commit: 28afef28b39bf799c84946a48771956f3491defe
 
   - name: Prepare build
     runs: phpize
