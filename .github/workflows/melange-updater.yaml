@@ -3,7 +3,7 @@ name: Melange Updater (GitHub and Release Monitor)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 * * * *" # Triggers the workflow every hour
+    - cron: '37 * * * *'
 
 permissions:
   id-token: write
