@@ -35,4 +35,5 @@ jobs:
           git_author_name: ${{ env.GIT_AUTHOR_NAME }}
           git_author_email: ${{ env.GIT_AUTHOR_EMAIL }}
           github_labels: 'request-version-update,automated pr'
+          github_reviewer: ${{ env.GIT_AUTHOR_NAME }}
           release_monitor_token: ${{ secrets.RELEASE_MONITOR_TOKEN }}
