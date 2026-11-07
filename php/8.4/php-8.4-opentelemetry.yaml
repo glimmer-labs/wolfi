@@ -1,7 +1,7 @@
 package:
   name: php-8.4-opentelemetry
-  version: "1.4.2"
-  epoch: 100 # Start epoch at 100 to have higher priority than wolfi/os
+  version: "1.5.0"
+  epoch: 0 # Start epoch at 100 to have higher priority than wolfi/os
   description: "OpenTelemetry PHP auto-instrumentation extension"
   copyright:
     - license: Apache-2.0
@@ -30,7 +30,7 @@ pipeline:
     with:
       repository: https://github.com/open-telemetry/opentelemetry-php-instrumentation
       tag: ${{package.version}}
-      expected-commit: 0b7c002f7cf85a7403a396c547e3dca452def356
+      expected-commit: 5f67270a65a39f33c2c423c106f65df26e26e9e4
 
   - name: Prepare build
     runs: cd ext && phpize
