@@ -90,7 +90,7 @@ pipeline:
         --sysconfdir=/etc/php \
         --localstatedir=/var \
         --with-layout=GNU \
-        --with-pic \
+        --enable-pic \
         --with-config-file-path=/etc/php \
         --with-config-file-scan-dir=/etc/php/conf.d \
         --enable-cli \
