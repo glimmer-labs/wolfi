@@ -32,6 +32,9 @@ pipeline:
       repository: https://github.com/krakjoe/apcu
       tag: "v${{package.version}}"
       expected-commit: 819fce90c469a5666b1706036cd66120af419f1f
+      cherry-picks: |
+        master/95f9ab828f95c6ca5877e584ead109189d0cec61: replace XtOffsetOf() with offsetof() for PHP 8.6
+        master/d29e907791502af89a7996930f8dce5fd8efe4a1: fix build against PHP 8.6 (EMPTY_SWITCH_DEFAULT_CASE removed)
 
   - name: Prepare build
     runs: phpize
