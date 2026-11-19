@@ -10,13 +10,6 @@ package:
       - ${{package.name}}-config
       - ${{package.name}}-src
       - php-${{vars.phpMM}}
-  resources:
-    cpu: "9"
-    memory: 20Gi
-  test-resources:
-    cpu: "1"
-    memory: 3Gi
-
 var-transforms:
   - from: ${{package.name}}
     match: ^php-(\d+\.\d+)-.*$
