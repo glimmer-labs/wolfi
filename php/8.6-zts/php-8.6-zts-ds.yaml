@@ -31,6 +31,9 @@ pipeline:
       repository: https://github.com/php-ds/ext-ds
       tag: "v${{package.version}}"
       expected-commit: 533f11e1fc7e45e457e77d879f853bf5ec789f07
+      cherry-picks: |
+        master/25e0f3adb619670b5ba79afcfc1c9de745586550: fix PHP 8.6 compatibility
+        master/de284b1a2c78a2d6974bc65bb449df59c002ec76: use zval_get_long_ex instead of zend_parse_parameter removed in 8.6
 
   - name: Prepare build
     runs: phpize

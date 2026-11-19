@@ -33,6 +33,8 @@ pipeline:
       repository: https://github.com/Imagick/imagick
       tag: "${{package.version}}"
       expected-commit: 70087bab33eab913e99ac77d64d04d1a2fd0b7b0
+      cherry-picks: |
+        master/b580a705e2c879924bfaee2e1ed3a93c9cb3fcfb: XtOffsetOf is removed in 8.6, use standard C offsetof
 
   # Apply package version template as `package.xml` does not seem to apply this automatically
   - runs: sed -i "s/@PACKAGE_VERSION@/${{package.version}}/g" ./*.h
