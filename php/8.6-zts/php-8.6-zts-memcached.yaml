@@ -34,6 +34,8 @@ pipeline:
       repository: https://github.com/php-memcached-dev/php-memcached
       tag: v${{package.version}}
       expected-commit: ce37962769fc7b25f9905c4b23fa53df92447a32
+      cherry-picks: |
+        master/3c73b4f0abe5bbfbbbe686f44a8ae52fcd3e67ee: fix build on PHP 8.6+
 
   - name: Prepare build
     runs: phpize
