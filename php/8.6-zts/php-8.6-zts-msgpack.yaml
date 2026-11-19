@@ -30,7 +30,7 @@ pipeline:
     with:
       repository: https://github.com/msgpack/msgpack-php
       # The tag has a msgpack- prefix, but the version does not.
-      tag: msgpack-${{package.version}}
+      tag: "v${{package.version}}"
       expected-commit: e0a661605ac03459909f66802bc83a3ba16cc9da
       cherry-picks: |
         master/cf19b26b6be9b7b5af10fe469fdcd661615d1acb: fix build with PHP 8.6: unserialize_callback_func is a zend_string
@@ -63,8 +63,8 @@ update:
   enabled: true
   github:
     identifier: msgpack/msgpack-php
-    tag-filter-prefix: msgpack-
-    strip-prefix: msgpack-
+    tag-filter-prefix: v
+    strip-prefix: v
 
 test:
   pipeline:
