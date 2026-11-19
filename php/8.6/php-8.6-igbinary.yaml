@@ -35,6 +35,7 @@ pipeline:
         master/c7fe8aad3d7894bb85f5a189eba60dec9203950d: use Zend/zend_smart_string.h
         master/d28f7e6e5a2e7f73225bdf9b619920a7986ff885: fix tests for 8.5.0beta2
         master/d4a6ded9ca6b3d7eec069de1891d03c5bc14c233: fix build with PHP 8.6: unserialize_callback_func is a zend_string
+        master/2e0788825caa067aaab10e6b80f5fd958d92b0f0: zval_dtor() alias of zval_ptr_dtor_nogc() removed in PHP 8.6
 
   - name: Prepare build
     runs: phpize
