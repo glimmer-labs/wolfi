@@ -69,8 +69,7 @@ pipeline:
     with:
       repository: https://github.com/php/php-src
       tag: php-${{package.version}}
-      # TODO: set to the php-8.6.0 tag commit once the release lands (2026-11-19)
-      expected-commit: "0000000000000000000000000000000000000000"
+      expected-commit: 8aaada3f9605d81a38b8240f93c7389dfbc77ef9
 
   # https://gitlab.alpinelinux.org/alpine/aports/-/blob/master/community/php85/install-pear.patch
   - uses: patch
