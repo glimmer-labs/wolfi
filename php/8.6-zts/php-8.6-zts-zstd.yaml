@@ -1,6 +1,6 @@
 package:
   name: php-8.6-zts-zstd
-  version: "0.18.0"
+  version: "0.19.1"
   epoch: 0
   description: Zstd Extension for PHP
   copyright:
@@ -32,7 +32,7 @@ pipeline:
     with:
       repository: https://github.com/kjdev/php-ext-zstd
       tag: "${{package.version}}"
-      expected-commit: c2593a4ce2457b23e7fa7f81ddf0dd9bbdd89b47
+      expected-commit: 7a66a2c28859ae51fc21f590ab085ba416916934
 
   - name: Prepare build
     runs: phpize
